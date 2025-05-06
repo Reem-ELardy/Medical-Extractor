@@ -36,12 +36,14 @@ from medical_pdf_processor import (
     generate_recommendations   # Recommendations using doctor agent
 )
 
+# Ensure the logs directory exists
+os.makedirs('logs', exist_ok=True)
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("streamlit_app.log"),
+        logging.FileHandler("logs/streamlit_app.log"),
         logging.StreamHandler()
     ]
 )
@@ -363,7 +365,7 @@ elif st.session_state.current_step == 'verify':
         if st.button("← Back to Upload", help="Return to the upload step"):
             logger.info("User chose to go back to upload step")
             st.session_state.current_step = 'upload'
-            st.experimental_rerun()
+            st.rerun()
     
     with col2:
         if st.button("Generate Recommendations →", help="Proceed to recommendations based on verified data"):

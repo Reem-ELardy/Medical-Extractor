@@ -39,15 +39,18 @@ from crewai import Agent, Task, Crew, Process, LLM
 import easyocr
 from crewai.tools import tool
 from PIL import Image
-import google.generativeai as genai
+# import google.generativeai as genai
+from google import genai
 
-
+# Ensure the logs directory exists
+os.makedirs('logs', exist_ok=True)
+os.makedirs("extracted", exist_ok=True)
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("medical_pdf_processor.log"),
+        logging.FileHandler("logs/medical_pdf_processor.log"),
         logging.StreamHandler()
     ]
 )
@@ -67,7 +70,6 @@ def initialize_llm():
         model='gemini/gemini-2.0-flash',
         provider="google",
         api_key=os.getenv("GEMINI_API_KEY")
-
     )
 
 # Initialize LLM
@@ -522,7 +524,7 @@ extraction_task = Task(
     agent=validation_agent,
     tools=[extract_text_from_image],
     async_execution=False,
-    output_file="extracted_text.txt"
+    output_file="extracted/extracted_text.txt"
 )
 logger.debug("Extraction Task defined")
 
