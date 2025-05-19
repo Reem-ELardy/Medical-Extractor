@@ -37,10 +37,11 @@ from crewai import Agent, Task, Crew, Process, LLM
 # from langchain.tools import tool
 # from langchain_groq import ChatGroq
 import easyocr
+import google.generativeai as genai
 from crewai.tools import tool
 from PIL import Image
 # import google.generativeai as genai
-from google import genai
+# from google import genai
 
 # Ensure the logs directory exists
 os.makedirs('logs', exist_ok=True)
