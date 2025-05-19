@@ -58,18 +58,32 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Load environment variables
-env_path = os.path.join("C:/Mine/college/Vs/Medical Extractor", ".env")
-load_dotenv(dotenv_path=env_path)
+# Try several possible locations for the .env file
+possible_paths = [
+    ".env",                         # Current directory
+    "../.env",                      # Parent directory
+    os.path.expanduser("~/.env")    # Home directory
+]
 
-logger.info("Environment variables loaded")
-api_key = os.getenv("GEMINI_API_KEY")
+env_loaded = False
+for path in possible_paths:
+    if os.path.exists(path):
+        load_dotenv(dotenv_path=path)
+        if os.getenv("GEMINI_API_KEY"):
+            logger.info(f"Loaded environment variables from {path}")
+            env_loaded = True
+            break
 
-
+if not env_loaded:
+    logger.error("Could not find .env file with GEMINI_API_KEY")
+    raise FileNotFoundError("No .env file with GEMINI_API_KEY found")
+# Check if the API key is set
 def initialize_llm():
     return LLM(
         model='gemini/gemini-2.0-flash',
         provider="google",
-        api_key=os.getenv("GEMINI_API_KEY")
+        api_key=os.getenv("GEMINI_API_KEY"),
+        temperature=0
     )
 
 # Initialize LLM
@@ -243,8 +257,8 @@ def format_to_json(extracted_text: str) -> str:
     You are an advanced medical assistant. Transform the following unstructured medical text into a structured JSON format with these sections:
     1. Patient Information
     2. Date of Issue
-    3. Type of Report (Heart, Brain, Skin, Bones, etc.)
-    4. Medical Problem (technical terms for doctors)
+    3. Type of Report (e.g., CT scan, MRI, virtual colonoscopy) based on the type of procedure mentioned
+    4. Medical Problem (using clinical terminology, as a doctor would describe it to another doctor)
     5. Simplified Explanation of the Medical Problem (for non-experts)
 
     Unstructured Medical Text:
