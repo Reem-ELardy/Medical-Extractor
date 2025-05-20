@@ -45,17 +45,23 @@ import google.generativeai as genai
 # Ensure the logs directory exists
 os.makedirs('logs', exist_ok=True)
 os.makedirs("extracted", exist_ok=True)
+
+# Get current date for the log filename
+current_date = datetime.now().strftime('%Y-%m-%d')
+log_filename = f"logs/medical_pdf_processor_{current_date}.log"
+
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("logs/medical_pdf_processor.log"),
+        logging.FileHandler(log_filename),
         logging.StreamHandler()
     ]
 )
 
 logger = logging.getLogger(__name__)
+logger.info(f"Starting new log session in file: {log_filename}")
 
 # Load environment variables
 # Try several possible locations for the .env file
@@ -77,6 +83,7 @@ for path in possible_paths:
 if not env_loaded:
     logger.error("Could not find .env file with GEMINI_API_KEY")
     raise FileNotFoundError("No .env file with GEMINI_API_KEY found")
+
 # Check if the API key is set
 def initialize_llm():
     return LLM(
@@ -254,25 +261,64 @@ def format_to_json(extracted_text: str) -> str:
     
     # Prompt for the LLM to structure the data
     prompt = f"""
-    You are an advanced medical assistant. Transform the following unstructured medical text into a structured JSON format with these sections:
-    1. Patient Information (from headers like patient name or ID)
-    2. Date of Issue
-    3. Type of Report (e.g., CT scan, MRI, virtual colonoscopy) based on the type of procedure mentioned
-    4. Medical Problem (using clinical terminology, as a doctor would describe it to another doctor)
-    5. Simplified Explanation of the Medical Problem (for non-experts)
+    You are a highly specialized medical data extraction expert with clinical experience. Transform the following unstructured medical text into a structured JSON format with extreme precision and attention to detail.
+
+    Follow these strict section-wise instructions:
+
+    1. Patient Information:
+       - Extract key-value pairs found in the document (name, age, gender)
+       - Format them explicitly as "key: value" pairs separated by commas or line breaks
+       - Example: "Name: John Smith, Age: 45, Gender: Male"
+       - Do NOT combine values without their keys
+
+    2. Date of Issue:
+       - Extract the exact date when the report was created
+       - Use standard format (MM/DD/YYYY or as presented in the document)
+       - If multiple dates exist, prioritize report creation date over exam date or admission date
+
+    3. Type of Report:
+        - Identify the document type (e.g., "Hospital Discharge Summary", "Radiology Report", "Consultation Note")
+       - DO NOT list individual tests performed (like CT, MRI, ultrasound)
+       - Look for document headers or standard formats to determine the report type
+       - If not explicitly stated, infer based on the overall structure and content
+
+
+    4. Medical Problem (DETAILED):
+       - Provide COMPREHENSIVE clinical description using proper medical terminology
+        - Extract ONLY the diagnosed conditions and primary medical issues
+       - Include the official diagnosis as stated in the document
+       - DO NOT simply copy all extracted text or laboratory values
+       - Focus on the actual medical conditions (e.g., "Acute pancreatitis and sepsis with pneumonia")
+       - Be concise and mention only the actual medical problems
+       - Write as one doctor would communicate to another specialist
+
+    5. Simplified Explanation:
+       - Translate the medical findings into plain, accessible language
+       - Avoid jargon while maintaining accuracy
+       - Explain implications clearly but without causing unnecessary alarm
+       - Include a basic interpretation of what the findings might mean for the patient
+       - Aim for high school reading level
+       
+    Important Notes:
+    - If a section cannot be determined, leave it as an **empty string** rather than guessing.
+    - Do not hallucinate any values.
+    - Carefully distinguish between diagnostic tests and the actual medical problems
+    - DO NOT include laboratory values or vital signs in the Medical Problem field
+    - Output ONLY the following JSON with no additional commentary or notes
 
     Unstructured Medical Text:
     {extracted_text}
 
-    Output only the following JSON:
+    Output ONLY the following JSON with no additional text:
     {{
-        "Patient Information": "string",
+        "Patient Information": "string with all key-value pairs preserved",
         "Date of Issue": "string",
         "Type of Report": "string",
-        "Medical Problem": "string",
+        "Medical Problem": "detailed string with all clinical findings",
         "Simplified Explanation": "string"
     }}
     """
+    
     
     try:
         # Use the LLM to structure the data
