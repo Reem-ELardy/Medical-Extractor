@@ -255,7 +255,7 @@ def format_to_json(extracted_text: str) -> str:
     # Prompt for the LLM to structure the data
     prompt = f"""
     You are an advanced medical assistant. Transform the following unstructured medical text into a structured JSON format with these sections:
-    1. Patient Information
+    1. Patient Information (from headers like patient name or ID)
     2. Date of Issue
     3. Type of Report (e.g., CT scan, MRI, virtual colonoscopy) based on the type of procedure mentioned
     4. Medical Problem (using clinical terminology, as a doctor would describe it to another doctor)
