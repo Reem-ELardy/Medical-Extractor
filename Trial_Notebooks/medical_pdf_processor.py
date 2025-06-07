@@ -182,65 +182,79 @@ def extract_text_from_image(image_path: str) -> str:
 @tool
 def validate_medical_values(data: str) -> str:
     """
-    Validate numerical values in medical data to ensure they are within acceptable ranges.
+    Validate medical numerical values and flag questionable terms (RAG-ready).
     
     Args:
-        data (str): Medical text data containing values to validate
-        
+        data (str): Medical text containing clinical values and terminology.
+    
     Returns:
-        str: JSON string with validation results, issues found, and corrected data
+        str: JSON with validation status, identified issues, and candidates for RAG review.
     """
     logger.info("Starting medical data validation")
-    
-    # Initialize validation results
+
     validation_results = {
         "valid": True,
         "issues": [],
-        "corrected_data": data
+        "corrected_data": data,
+        "rag_candidates": []
     }
-    
+
     try:
-        # Example validation for blood pressure
-        if "Blood Pressure" in data:
-            logger.debug("Checking blood pressure values")
-            bp_match = re.search(r"Blood Pressure: (\d+)/(\d+)", data)
-            if bp_match:
-                systolic = int(bp_match.group(1))
-                diastolic = int(bp_match.group(2))
-                logger.debug(f"Found blood pressure: {systolic}/{diastolic} mmHg")
-                
-                # Normal range: Systolic 90-140, Diastolic 60-90
-                if systolic > 180 or systolic < 80 or diastolic > 120 or diastolic < 50:
-                    validation_results["valid"] = False
-                    issue = f"Blood pressure reading {systolic}/{diastolic} outside normal range"
-                    validation_results["issues"].append(issue)
-                    logger.warning(issue)
-        
-        # Example validation for glucose level
-        if "Glucose" in data:
-            logger.debug("Checking glucose values")
-            glucose_match = re.search(r"Glucose: (\d+)", data)
-            if glucose_match:
-                glucose = int(glucose_match.group(1))
-                logger.debug(f"Found glucose level: {glucose} mg/dL")
-                
-                # Normal range: 70-140 mg/dL
-                if glucose > 300 or glucose < 40:
-                    validation_results["valid"] = False
-                    issue = f"Glucose level {glucose} mg/dL outside normal range"
-                    validation_results["issues"].append(issue)
-                    logger.warning(issue)
-        
-        # Log validation results
+        # Blood Pressure
+        bp_match = re.search(r"Blood Pressure: (\d+)/(\d+)", data)
+        if bp_match:
+            systolic = int(bp_match.group(1))
+            diastolic = int(bp_match.group(2))
+            logger.debug(f"Blood pressure: {systolic}/{diastolic}")
+            if systolic > 180 or systolic < 80 or diastolic > 120 or diastolic < 50:
+                issue = f"Blood Pressure {systolic}/{diastolic} mmHg outside normal range"
+                validation_results["issues"].append(issue)
+                validation_results["valid"] = False
+
+        # Glucose
+        glucose_match = re.search(r"Glucose: (\d+)", data)
+        if glucose_match:
+            glucose = int(glucose_match.group(1))
+            logger.debug(f"Glucose level: {glucose} mg/dL")
+            if glucose < 40 or glucose > 300:
+                issue = f"Glucose level {glucose} mg/dL outside expected range"
+                validation_results["issues"].append(issue)
+                validation_results["valid"] = False
+
+        # Heart Rate
+        hr_match = re.search(r"Heart Rate: (\d+)", data)
+        if hr_match:
+            hr = int(hr_match.group(1))
+            if hr < 40 or hr > 150:
+                issue = f"Heart rate {hr} bpm is abnormal"
+                validation_results["issues"].append(issue)
+                validation_results["valid"] = False
+
+        # Temperature
+        temp_match = re.search(r"Temperature: ([0-9.]+)", data)
+        if temp_match:
+            temp = float(temp_match.group(1))
+            if temp < 35.0 or temp > 40.0:
+                issue = f"Temperature {temp}°C outside normal body temperature range"
+                validation_results["issues"].append(issue)
+                validation_results["valid"] = False
+
+        # --- Placeholder for Medical Term Validation via RAG ---
+        # You can use regex or a chunker to identify terms to validate
+        suspect_terms = re.findall(r"(Diagnosis: .+?)(?:\n|$)", data)
+        if suspect_terms:
+            validation_results["rag_candidates"].extend([term.strip() for term in suspect_terms])
+
+        # Log result
         if validation_results["valid"]:
-            logger.info("Validation complete - No issues found")
+            logger.info("Validation complete - No critical issues")
         else:
-            logger.info(f"Validation complete - Found {len(validation_results['issues'])} issues")
-            
+            logger.info(f"Validation found {len(validation_results['issues'])} issues")
+
         return json.dumps(validation_results)
-    
+
     except Exception as e:
-        logger.error(f"Error during medical data validation: {str(e)}", exc_info=True)
+        logger.error(f"Validation error: {str(e)}", exc_info=True)
         validation_results["valid"] = False
         validation_results["issues"].append(f"Validation error: {str(e)}")
         return json.dumps(validation_results)
