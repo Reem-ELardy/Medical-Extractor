@@ -280,93 +280,70 @@ def format_to_json(extracted_text: str) -> str:
     Follow these strict section-wise instructions:
 
     1. Patient Information:
-        - Extract all key-value pairs found in the patient header section of the document.
-        - Typical fields to extract include: Name, Age, Gender, Patient ID, SSN.
-        - DO NOT extract Date of Issue in this section.
-        - Preserve all keys exactly as they appear in the document (do not translate keys).
-        - Format them explicitly as "key: value" pairs, separated by commas or line breaks.
-        - If a field is missing, simply skip it (do not invent or hallucinate).
-        - Example:
-           "Name: John Smith, Age: 45, Gender: Male, Patient ID: 123456, SSN: 987654"
-        - DO NOT combine values without their corresponding keys.
-        - DO NOT omit any key-value pair that appears in the header.
-
+        - Extract only the following fields: Name, Age, and Gender.
+        - Combine them in a single string in this exact format: "Name: <value>, Age: <value>, Gender: <value>"
+        - Skip any missing field (e.g., if Age is missing, just include Name and Gender).
+        - DO NOT include any other values like Patient ID, SSN, Floor, or Consultant.
+        - DO NOT translate keys; use exactly "Name", "Age", and "Gender" as shown.
+        - Use comma-separated key-value pairs, in the order: Name, Age, Gender.
+        - Example outputs:
+            - "Name: John Smith, Age: 45, Gender: Male"
+            - "Name: Mary Jane, Gender: Female"
+            - "Name: Tom Lee"
+            
     2. Date of Issue:
-       - Extract the exact date when the report was created
-       - Use standard format (MM/DD/YYYY or as presented in the document)
-       - If multiple dates exist, prioritize report creation date over exam date or admission date
+        - Extract the exact date when the report was created.
+        - Use standard format (DD.MM.YYYY or as presented in the document).
+        - If multiple dates exist, prioritize report creation or discharge date over admission date.
+        - If no date is found, output an empty string.
 
     3. Type of Report:
-       - Your task is to identify the overall document type based on its clinical purpose and structure.
-   - Valid types include (but are not limited to): "Hospital Discharge Summary", "Radiology Report", "Consultation Note", "Laboratory Report", "Operative Report", "Pathology Report", "Medical Certificate", "Referral Letter", "Follow-Up Note".
-   - Focus on recognizing high-level report categories, not specific tests, procedures, or anatomical locations.
-   - DO NOT list:
-       - Individual tests or procedures (e.g., "CT Scan", "MRI", "Blood Test", "Ultrasound")
-       - Body parts or organs (e.g., "Brain Report", "Skin Report", "Heart Report")
-   - If the document explicitly states the report type in headers, titles, or first lines, extract that title directly.
-   - If no explicit type is stated, infer carefully based on:
-       - Section titles and clinical structure
-       - Language style (e.g., summary, interpretation, operative description, pathology examination, etc.)
-       - Clinical workflow clues (admission, consultation, discharge, surgery, pathology, follow-up, etc.)
-   - DO NOT hallucinate or guess if uncertain. Output an empty string ("") if the report type cannot be reliably determined.
-   - Always prioritize accuracy, medical realism, and safety.
+        - Identify the overall document type based on its clinical purpose and structure.
+        - Valid types include (but are not limited to): "Hospital Discharge Summary", "Radiology Report", "Consultation Note", "Laboratory Report", "Operative Report", "Pathology Report", "Medical Certificate", "Referral Letter", "Follow-Up Note".
+        - Focus on recognizing high-level report categories.
+        - DO NOT list:
+            - Individual tests or procedures (e.g., "CT Scan", "MRI")
+            - Body parts (e.g., "Brain Report")
+        - If clearly stated, extract the type directly.
+        - If uncertain, infer based on structure and clinical context.
+        - If no type can be determined, return an empty string.
 
     4. Medical Problem (DETAILED):
-       - Extract only the confirmed diagnoses, primary clinical problems, or established medical conditions mentioned in the report.
-   - Use proper medical terminology as used by healthcare professionals.
-   - Your output should sound like a physician documenting a problem list for a colleague.
-   - DO NOT include:
-       - Laboratory values, vital signs, or measurements (these belong elsewhere).
-       - Symptoms, findings, test names, or procedures unless they are explicitly stated as part of the final diagnosis.
-       - Vague statements, provisional impressions, or recommendations for future testing.
-   - Focus on finalized, documented medical conditions.
-   - If multiple conditions are mentioned, list all major conditions in a clear, concise way.
-   - Examples of valid outputs:
-       - "Acute pancreatitis complicated by sepsis"
-       - "Uncontrolled type 2 diabetes mellitus with diabetic nephropathy"
-       - "Left-sided ischemic stroke secondary to atrial fibrillation"
-   - DO NOT hallucinate or infer conditions not explicitly confirmed in the report.
-   - If no clear medical problem is identified, output an empty string ("").
+        - Extract only confirmed diagnoses or clearly stated medical conditions.
+        - Use professional medical terminology, as if writing in a clinical chart.
+        - DO NOT include:
+            - Lab values, vital signs, or tests.
+            - Symptoms unless confirmed as diagnosis.
+            - Unconfirmed impressions or future considerations.
+        - Return multiple conditions if mentioned, concisely.
 
     5. Simplified Explanation:
-       - Translate the extracted Medical Problem into clear, easy-to-understand language suitable for a patient with no medical background.
-   - Avoid any medical jargon, technical terms, or abbreviations unless they are very commonly understood by the general public (e.g., "heart attack" instead of "myocardial infarction").
-   - Maintain clinical accuracy while keeping explanations simple and reassuring.
-   - Clearly explain:
-       - What the condition is.
-       - What it means for the patient.
-       - Any major concerns the patient should be aware of.
-   - DO NOT:
-       - Provide treatment advice.
-       - Mention unconfirmed risks, complications, or prognosis unless stated directly in the document.
-       - Add hypothetical or speculative information.
-   - Use warm, empathetic, and encouraging language.
-   - Target a reading level of an average high school student (~9th grade).
-   - Example outputs:
-       - "You have an infection of your pancreas that needs medical care, but with proper treatment, most people recover fully."
-       - "Your blood sugar is not well controlled, which can affect your kidneys. Your doctor will help you manage this to protect your health."
-   - If no clear explanation can be provided, output an empty string ("").
+        - Translate the Medical Problem into plain English a patient can understand.
+        - Avoid jargon or clinical abbreviations unless widely known (e.g., "heart attack").
+        - Keep it simple, accurate, and empathetic.
+        - Clearly explain what the problem is and what it means for the patient.
+        - DO NOT provide treatment plans, risks, or prognosis unless clearly stated in the document.
+        - Target a reading level of a high school student (~9th grade).
+        - If unclear, return an empty string.
 
     Important Notes:
     - If a section cannot be determined, leave it as an **empty string** rather than guessing.
-    - Do not hallucinate any values.
-    - Carefully distinguish between diagnostic tests and the actual medical problems
-    - DO NOT include laboratory values or vital signs in the Medical Problem field
-    - Output ONLY the following JSON with no additional commentary or notes
+    - Do not hallucinate or infer information not in the text.
+    - Output ONLY the following JSON with no additional commentary or explanation.
 
     Unstructured Medical Text:
     {extracted_text}
 
     Output ONLY the following JSON with no additional text:
     {{
-        "Patient Information": "string with all key-value pairs preserved",
+        "Patient Information": "string in format: Name: <value>, Age: <value>, Gender: <value>",
         "Date of Issue": "string",
         "Type of Report": "string",
         "Medical Problem": "detailed string with all clinical findings",
         "Simplified Explanation": "string"
     }}
     """
-    
+
     
     try:
         # Use the LLM to structure the data
