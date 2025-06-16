@@ -280,10 +280,16 @@ def format_to_json(extracted_text: str) -> str:
     Follow these strict section-wise instructions:
 
     1. Patient Information:
-       - Extract key-value pairs found in the document (name, age, gender)
-       - Format them explicitly as "key: value" pairs separated by commas or line breaks
-       - Example: "Name: John Smith, Age: 45, Gender: Male"
-       - Do NOT combine values without their keys
+        - Extract all key-value pairs found in the patient header section of the document.
+        - Typical fields to extract include: Name, Age, Gender, Patient ID, SSN.
+        - DO NOT extract Date of Issue in this section.
+        - Preserve all keys exactly as they appear in the document (do not translate keys).
+        - Format them explicitly as "key: value" pairs, separated by commas or line breaks.
+        - If a field is missing, simply skip it (do not invent or hallucinate).
+        - Example:
+           "Name: John Smith, Age: 45, Gender: Male, Patient ID: 123456, SSN: 987654"
+        - DO NOT combine values without their corresponding keys.
+        - DO NOT omit any key-value pair that appears in the header.
 
     2. Date of Issue:
        - Extract the exact date when the report was created
@@ -291,28 +297,56 @@ def format_to_json(extracted_text: str) -> str:
        - If multiple dates exist, prioritize report creation date over exam date or admission date
 
     3. Type of Report:
-        - Identify the document type (e.g., "Hospital Discharge Summary", "Radiology Report", "Consultation Note")
-       - DO NOT list individual tests performed (like CT, MRI, ultrasound)
-       - Look for document headers or standard formats to determine the report type
-       - If not explicitly stated, infer based on the overall structure and content
-
+       - Your task is to identify the overall document type based on its clinical purpose and structure.
+   - Valid types include (but are not limited to): "Hospital Discharge Summary", "Radiology Report", "Consultation Note", "Laboratory Report", "Operative Report", "Pathology Report", "Medical Certificate", "Referral Letter", "Follow-Up Note".
+   - Focus on recognizing high-level report categories, not specific tests, procedures, or anatomical locations.
+   - DO NOT list:
+       - Individual tests or procedures (e.g., "CT Scan", "MRI", "Blood Test", "Ultrasound")
+       - Body parts or organs (e.g., "Brain Report", "Skin Report", "Heart Report")
+   - If the document explicitly states the report type in headers, titles, or first lines, extract that title directly.
+   - If no explicit type is stated, infer carefully based on:
+       - Section titles and clinical structure
+       - Language style (e.g., summary, interpretation, operative description, pathology examination, etc.)
+       - Clinical workflow clues (admission, consultation, discharge, surgery, pathology, follow-up, etc.)
+   - DO NOT hallucinate or guess if uncertain. Output an empty string ("") if the report type cannot be reliably determined.
+   - Always prioritize accuracy, medical realism, and safety.
 
     4. Medical Problem (DETAILED):
-       - Provide COMPREHENSIVE clinical description using proper medical terminology
-        - Extract ONLY the diagnosed conditions and primary medical issues
-       - Include the official diagnosis as stated in the document
-       - DO NOT simply copy all extracted text or laboratory values
-       - Focus on the actual medical conditions (e.g., "Acute pancreatitis and sepsis with pneumonia")
-       - Be concise and mention only the actual medical problems
-       - Write as one doctor would communicate to another specialist
+       - Extract only the confirmed diagnoses, primary clinical problems, or established medical conditions mentioned in the report.
+   - Use proper medical terminology as used by healthcare professionals.
+   - Your output should sound like a physician documenting a problem list for a colleague.
+   - DO NOT include:
+       - Laboratory values, vital signs, or measurements (these belong elsewhere).
+       - Symptoms, findings, test names, or procedures unless they are explicitly stated as part of the final diagnosis.
+       - Vague statements, provisional impressions, or recommendations for future testing.
+   - Focus on finalized, documented medical conditions.
+   - If multiple conditions are mentioned, list all major conditions in a clear, concise way.
+   - Examples of valid outputs:
+       - "Acute pancreatitis complicated by sepsis"
+       - "Uncontrolled type 2 diabetes mellitus with diabetic nephropathy"
+       - "Left-sided ischemic stroke secondary to atrial fibrillation"
+   - DO NOT hallucinate or infer conditions not explicitly confirmed in the report.
+   - If no clear medical problem is identified, output an empty string ("").
 
     5. Simplified Explanation:
-       - Translate the medical findings into plain, accessible language
-       - Avoid jargon while maintaining accuracy
-       - Explain implications clearly but without causing unnecessary alarm
-       - Include a basic interpretation of what the findings might mean for the patient
-       - Aim for high school reading level
-       
+       - Translate the extracted Medical Problem into clear, easy-to-understand language suitable for a patient with no medical background.
+   - Avoid any medical jargon, technical terms, or abbreviations unless they are very commonly understood by the general public (e.g., "heart attack" instead of "myocardial infarction").
+   - Maintain clinical accuracy while keeping explanations simple and reassuring.
+   - Clearly explain:
+       - What the condition is.
+       - What it means for the patient.
+       - Any major concerns the patient should be aware of.
+   - DO NOT:
+       - Provide treatment advice.
+       - Mention unconfirmed risks, complications, or prognosis unless stated directly in the document.
+       - Add hypothetical or speculative information.
+   - Use warm, empathetic, and encouraging language.
+   - Target a reading level of an average high school student (~9th grade).
+   - Example outputs:
+       - "You have an infection of your pancreas that needs medical care, but with proper treatment, most people recover fully."
+       - "Your blood sugar is not well controlled, which can affect your kidneys. Your doctor will help you manage this to protect your health."
+   - If no clear explanation can be provided, output an empty string ("").
+
     Important Notes:
     - If a section cannot be determined, leave it as an **empty string** rather than guessing.
     - Do not hallucinate any values.
@@ -474,17 +508,53 @@ def generate_medical_recommendations(structured_data: Union[str, dict]) -> str:
 
     # Create a prompt for the LLM to generate recommendations
     prompt = f"""
-    Based on the following structured medical data, provide patient-friendly recommendations:
-    
-    Patient Information: {data.get('Patient Information', 'Unknown')}
-    Medical Problem: {data.get('Medical Problem', 'Unknown')}
-    Simplified Explanation: {data.get('Simplified Explanation', 'Unknown')}
-    
-    Generate 3-5 practical recommendations that would be helpful for this patient.
-    Each recommendation should include:
-    1. A clear action item
-    2. A brief explanation of why it's important
-    3. Any relevant lifestyle modifications
+    You are a clinically responsible AI medical assistant specializing in generating patient-friendly and medically safe recommendations based strictly on real medical reports.
+
+You are provided with:
+- Patient Information: {data.get('Patient Information', 'Unknown')}
+- Medical Problem (technical description): {data.get('Medical Problem', 'Unknown')}
+- Simplified Explanation (patient-friendly summary): {data.get('Simplified Explanation', 'Unknown')}
+
+Your primary goal:
+✅ Generate highly accurate, practical, actionable, and safe recommendations tailored to this specific medical case.
+✅ Base your recommendations ONLY on the provided medical data. Do not add assumptions or external diagnoses.
+✅ Follow general medical best-practices, preventive care, and patient education principles.
+
+**Rules:**
+- Never introduce any unverified diagnosis, medication, or treatment unless clearly mentioned in the input.
+- Always stay within non-invasive, patient-empowering advice.
+- Respect medical boundaries — your role is to support, not replace, clinical decision-making.
+- Language must be empathetic, simple, and reassuring.
+- Avoid complex medical jargon unless necessary; target 9th-grade reading level.
+
+**Domains to cover (if applicable to the patient's case):**
+- Medication adherence & importance of following prescriptions (only if medication is mentioned)
+- Monitoring warning signs & when to contact a doctor
+- Scheduling necessary follow-up appointments
+- Lifestyle & diet adjustments related to the condition
+- Mental health and emotional well-being
+- Preventive care & education on condition management
+
+**For each recommendation output:**
+- recommendation: (the clear action the patient should take)
+- explanation: (why this action helps based on the patient's situation)
+- lifestyle_modifications: (specific easy-to-apply daily-life tips to support better outcomes)
+
+
+Generate between 3 to 5 recommendations.
+
+Output strictly in this JSON format:
+
+{{
+  "recommendations": [
+    {{
+      "recommendation": "...",
+      "explanation": "..."
+      "lifestyle_modifications": "..."
+    }},
+    ...
+  ]
+}}
     
     Format the recommendations as a JSON array of objects with "recommendation" and "explanation" fields.
     """
