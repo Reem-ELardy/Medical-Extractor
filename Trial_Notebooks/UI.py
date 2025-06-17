@@ -172,7 +172,7 @@ if 'session_id' not in st.session_state:
 
 # Initialize session state variables if they don't exist
 if 'current_step' not in st.session_state:
-    st.session_state.current_step = 'upload'  # Possible values: 'upload', 'verify', 'recommend'
+    st.session_state.current_step = 'upload'  # Possible values: 'upload', 'verify', 'recommend', 'feedback'
     logger.debug("Initialized current_step to 'upload'")
 
 if 'extracted_text' not in st.session_state:
@@ -187,16 +187,19 @@ if 'recommendations' not in st.session_state:
 if 'pdf_path' not in st.session_state:
     st.session_state.pdf_path = None
 
+if "user_feedback" not in st.session_state:
+    st.session_state.user_feedback = None
+
 # Sidebar navigation
 with st.sidebar:
     st.header("Navigation")
     st.write("Current step: " + st.session_state.current_step.capitalize())
     
     # Display progress
-    step_mapping = {"upload": 1, "verify": 2, "recommend": 3}
+    step_mapping = {"upload": 0, "Processing": 1, "verify": 2, "feedback": 3, "recommend": 4}
     current_step_num = step_mapping.get(st.session_state.current_step, 1)
     
-    st.progress(current_step_num / 3)
+    st.progress(current_step_num / 4)
     
     # Session information
     st.subheader("Session Info")
@@ -243,6 +246,7 @@ if st.session_state.current_step == 'upload':
                     # Use the CrewAI processing pipeline
                     logger.debug("Starting full CrewAI processing")
                     # The process_pdf function returns a complete result with all needed data
+                    st.session_state.current_step = 'Processing'
                     result = process_image(image_path)
                     logger.info("CrewAI processing completed successfully")
                     
@@ -291,14 +295,28 @@ elif st.session_state.current_step == 'verify':
     
     with col1:
         # Display and allow editing of each field
-        patient_info = st.text_area(
-            "Patient Information", 
-            value=structured_data["Patient Information"],
-            help="Including name, age, gender, and ID"
-        )
+        # patient_info = st.text_area(
+        #     "Patient Information", 
+        #     value=structured_data["Patient Information"],
+        #     help="Including name, age, gender, and ID"
+        # )
+
+        patient_info = structured_data["Patient Information"]
+        patient_info = dict(item.strip().split(": ", 1) for item in patient_info.split(",") if ": " in item)
+
+
+        st.subheader("Patient Information")
+
+        col3, col4 = st.columns([0.01, 0.99])  # Adjust ratio for more/less indentation
+        with col4:
+            name = st.text_input("Name", value=patient_info.get("Name", ""))
+            if "Age" in patient_info:
+                age = st.text_input("Age", value=patient_info.get("Age", ""))
+            if "Gender" in patient_info:
+                gender = st.text_input("Gender", value=patient_info.get("Gender", ""))
         
         date_of_issue = st.text_area(
-            "Date of Issue",
+            label = "Date of Issue",
             value=structured_data["Date of Issue"],
             help="When the report was created"
         )
@@ -306,21 +324,24 @@ elif st.session_state.current_step == 'verify':
         report_type = st.text_area(
             "Type of Report",
             value=structured_data["Type of Report"],
-            help="E.g., Heart, Brain, Skin, etc."
+            help="E.g., Heart, Brain, Skin, etc.",
+            disabled= True
         )
         
         medical_problem = st.text_area(
             "Medical Problem (Technical)",
             value=structured_data["Medical Problem"],
             height=150,
-            help="Technical description using medical terminology"
+            help="Technical description using medical terminology",
+            disabled= True
         )
         
         simplified_explanation = st.text_area(
             "Simplified Explanation",
             value=structured_data["Simplified Explanation"],
             height=150,
-            help="Patient-friendly explanation of the medical problem"
+            help="Patient-friendly explanation of the medical problem",
+            disabled= True
         )
     
     with col2:
@@ -333,30 +354,14 @@ elif st.session_state.current_step == 'verify':
         - Make sure the simplified explanation is clear and non-technical
         """)
         
-        # Preview of original text if available
-        if st.session_state.extracted_text:
-            with st.expander("View Original Extracted Text"):
-                extracted_text = st.session_state.extracted_text
-                if isinstance(extracted_text, str):
-                    st.text(extracted_text[:2000] + "..." if len(extracted_text) > 2000 else extracted_text)
-                else:
-                    st.text("Extracted text not available in string format")
-    
-    # Option to add additional fields
-    st.subheader("Additional Fields")
-    add_field = st.checkbox("Add custom field")
-    
-    custom_field_name = ""
-    custom_field_value = ""
-    
-    if add_field:
-        col1, col2 = st.columns([1, 3])
-        with col1:
-            custom_field_name = st.text_input("Field name", help="E.g., 'Medication', 'Test Results'")
-        with col2:
-            custom_field_value = st.text_area("Field value")
-        
-        st.info("Custom fields will be included in the structured data and may be used for generating recommendations.")
+        # # Preview of original text if available
+        # if st.session_state.extracted_text:
+        #     with st.expander("View Original Extracted Text"):
+        #         extracted_text = st.session_state.extracted_text
+        #         if isinstance(extracted_text, str):
+        #             st.text(extracted_text[:2000] + "..." if len(extracted_text) > 2000 else extracted_text)
+        #         else:
+        #             st.text("Extracted text not available in string format")
     
     # Buttons for navigation
     col1, col2 = st.columns(2)
@@ -380,13 +385,192 @@ elif st.session_state.current_step == 'verify':
                 "Simplified Explanation": simplified_explanation
             }
             
-            # Add custom field if provided
-            if add_field and custom_field_name and custom_field_value:
-                logger.info(f"Adding custom field: {custom_field_name}")
-                updated_data[custom_field_name] = custom_field_value
-            
             # Save the updated data
             st.session_state.structured_data = updated_data
+            logger.debug("Updated structured data saved to session state")
+            
+            # Generate recommendations using the crew-based approach
+            with st.spinner("Generating recommendations..."):
+                try:
+                    logger.debug("Starting recommendation generation")
+                    recommendations_result = generate_recommendations(updated_data)
+                    st.session_state.recommendations = recommendations_result
+                    logger.info("Successfully generated recommendations")
+                except Exception as e:
+                    logger.error(f"Error generating recommendations: {str(e)}", exc_info=True)
+                    st.error(f"Error generating recommendations: {str(e)}")
+                    st.session_state.recommendations = {"error": "Failed to generate recommendations"}
+            
+            # Move to recommendations step
+            logger.info("Moving to recommendations step")
+            st.session_state.current_step = 'recommend'
+            st.rerun()
+
+    # Feedback mechanism
+    st.header("Provide Feedback")
+    st.write("Request modifications or additional information to improve the results.")
+
+    st.session_state.user_feedback = st.text_area(
+        "What would you like to modify or add?",
+        value=st.session_state.user_feedback,
+        placeholder="Example: 'Please add more details about medication dosages' or 'The age in the patient information is incorrect, it should be 45'",
+        key="feedback_input"
+    )
+    
+    if st.button("Apply Feedback", help="Process feedback and update results"):
+        if not st.session_state.user_feedback.strip():
+            st.warning("Please enter your feedback before submitting.")
+        else:
+            logger.info(f"Processing user feedback: {st.session_state.user_feedback[:50]}...")
+            
+            with st.spinner("Processing your feedback..."):
+                try:
+                    verified_data = {
+                        "Patient Information": patient_info,
+                        "Date of Issue": date_of_issue,
+                        "Type of Report": report_type,
+                        "Medical Problem": medical_problem,
+                        "Simplified Explanation": simplified_explanation
+                    }
+                    
+                    logger.info(f"User Feedback in UI is: **************************************{st.session_state.user_feedback}************************************************")
+
+                    # Process feedback using the crew-based approach
+                    updated_data = process_feedback(
+                        verified_data,
+                        st.session_state.user_feedback
+                    )
+
+                    if isinstance(updated_data, str):
+                        updated_data = json.loads(updated_data)
+                    
+                    # Extract text will have been processed by the crew
+                    # Store any extracted text if available in the results
+                    if "extracted_text" in updated_data:
+                        st.session_state.extracted_text = updated_data["extracted_text"]
+                    else:
+                        # If not explicitly included, use the structured data as a fallback
+                        st.session_state.extracted_text = json.dumps(updated_data.model_dump(), indent=2)  
+
+                    # st.session_state.structured_data = updated_data
+                    
+                    # Update the session state
+                    st.session_state.structured_data = extract_json(updated_data)
+                    logger.info("Successfully updated data based on feedback")
+                    
+                    st.session_state.user_feedback = ""
+                    st.success("Feedback applied successfully!")
+                except Exception as e:
+                    logger.error(f"Error processing feedback: {str(e)}", exc_info=True)
+                    st.error(f"Error processing feedback: {str(e)}")
+
+            st.session_state.current_step = 'feedback'
+            st.rerun()
+
+#############################################################################
+# FEEDBACK LOOP STEP
+#############################################################################
+
+elif st.session_state.current_step == 'feedback':
+    logger.debug("Rendering recommendations step UI")
+
+    st.header("Medical Information")
+    
+    # Display the verified information
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        patient_info = st.session_state.structured_data["Patient Information"]
+
+        st.subheader("Patient Information")
+
+        st.write(f"**Name:** {patient_info.get('Name', 'N/A')}")
+        if "Age" in patient_info:
+            st.write(f"**Age:** {patient_info.get('Age', 'N/A')}")
+        if "Gender" in patient_info:
+            st.write(f"**Gender:** {patient_info.get('Gender', 'N/A')}")
+
+        
+        st.subheader("Date of Issue")
+        st.write(st.session_state.structured_data["Date of Issue"])
+        
+        st.subheader("Type of Report")
+        st.write(st.session_state.structured_data["Type of Report"])
+    
+    with col2:
+        st.subheader("Medical Problem (Technical)")
+        st.write(st.session_state.structured_data["Medical Problem"])
+        
+        st.subheader("Simplified Explanation")
+        st.write(st.session_state.structured_data["Simplified Explanation"])
+    
+    # Display any custom fields
+    for key, value in st.session_state.structured_data.items():
+        if key not in ["Patient Information", "Date of Issue", "Type of Report", 
+                    "Medical Problem", "Simplified Explanation"]:
+            st.subheader(key)
+            st.write(value)
+    
+    # Actions
+    st.subheader("Actions")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        # Button to start over
+        if st.button("Start Over", help="Reset and upload a new PDF"):
+            logger.info("User chose to start over")
+            
+            # Clean up temp file if it exists
+            if st.session_state.pdf_path:
+                cleanup_temp_file(st.session_state.pdf_path)
+            
+            # Reset session state
+            st.session_state.current_step = 'upload'
+            st.session_state.extracted_text = None
+            st.session_state.structured_data = None
+            st.session_state.recommendations = None
+            st.session_state.pdf_path = None
+            st.session_state.user_feedback = None
+            
+            # Generate a new session ID
+            st.session_state.session_id = generate_session_id()
+            logger.info(f"Generated new session ID: {st.session_state.session_id}")
+            
+            st.rerun()
+    
+    with col2:
+        # Download results button
+        if st.button("Download Results", help="Save structured data and recommendations as JSON"):
+            logger.info("User requested to download results")
+            
+            # Prepare the complete results
+            complete_results = {
+                "session_id": st.session_state.session_id,
+                "generated_at": datetime.now().isoformat(),
+                "medical_data": extract_json(json.dumps(st.session_state.structured_data)),
+                "recommendations": extract_json(st.session_state.recommendations)
+            }
+            
+            # Convert to JSON
+            results_json = json.dumps(complete_results, indent=2)
+            
+            # Offer download
+            st.download_button(
+                label="Download JSON",
+                data=results_json,
+                file_name=f"medical_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json"
+            )
+
+    with col3:
+        if st.button("Generate Recommendations →", help="Proceed to recommendations based on verified data"):
+            logger.info("User verified data and requested recommendations")
+            
+            # Update the structured data with edited values
+            updated_data = extract_json(st.session_state.structured_data)
+            updated_data = json.dumps(updated_data, indent=2)
+            
+            # Save the updated data
             logger.debug("Updated structured data saved to session state")
             
             # Generate recommendations using the crew-based approach
@@ -415,6 +599,8 @@ elif st.session_state.current_step == 'recommend':
     
     # Use tabs for better organization
     tab1, tab2 = st.tabs(["Recommendations", "Medical Information"])
+    # if st.session_state["feedback_input"] != '':
+    #     st.session_state["feedback_input"] = ''
     
     with tab1:
         st.header("Medical Recommendations")
@@ -445,23 +631,31 @@ elif st.session_state.current_step == 'recommend':
         
         # Display the verified information
         col1, col2 = st.columns(2)
+        # st.session_state.structured_data = json.load(st.session_state.structured_data.model_dump(), indent=2)
         
         with col1:
+            patient_info = st.session_state.structured_data["Patient Information"]
+
             st.subheader("Patient Information")
-            st.write(st.session_state.structured_data.get("Patient Information", "Not available"))
+            st.write(f"**Name:** {patient_info.get('Name', 'N/A')}")
+            if "Age" in patient_info:
+                st.write(f"**Age:** {patient_info.get('Age', 'N/A')}")
+            if "Gender" in patient_info:
+                st.write(f"**Gender:** {patient_info.get('Gender', 'N/A')}")
+
             
             st.subheader("Date of Issue")
-            st.write(st.session_state.structured_data.get("Date of Issue", "Not available"))
+            st.write(st.session_state.structured_data["Date of Issue"])
             
             st.subheader("Type of Report")
-            st.write(st.session_state.structured_data.get("Type of Report", "Not available"))
+            st.write(st.session_state.structured_data["Type of Report"])
         
         with col2:
             st.subheader("Medical Problem (Technical)")
-            st.write(st.session_state.structured_data.get("Medical Problem", "Not available"))
+            st.write(st.session_state.structured_data["Medical Problem"])
             
             st.subheader("Simplified Explanation")
-            st.write(st.session_state.structured_data.get("Simplified Explanation", "Not available"))
+            st.write(st.session_state.structured_data["Simplified Explanation"])
         
         # Display any custom fields
         for key, value in st.session_state.structured_data.items():
@@ -469,14 +663,6 @@ elif st.session_state.current_step == 'recommend':
                         "Medical Problem", "Simplified Explanation"]:
                 st.subheader(key)
                 st.write(value)
-    
-    # Show raw JSON in expandable section
-    with st.expander("View Raw Data"):
-        st.subheader("Structured Medical Data")
-        st.json(st.session_state.structured_data)
-        
-        st.subheader("Recommendations")
-        st.json(st.session_state.recommendations)
     
     # Actions
     st.subheader("Actions")
@@ -497,6 +683,7 @@ elif st.session_state.current_step == 'recommend':
             st.session_state.structured_data = None
             st.session_state.recommendations = None
             st.session_state.pdf_path = None
+            st.session_state.user_feedback = None
             
             # Generate a new session ID
             st.session_state.session_id = generate_session_id()
@@ -513,8 +700,8 @@ elif st.session_state.current_step == 'recommend':
             complete_results = {
                 "session_id": st.session_state.session_id,
                 "generated_at": datetime.now().isoformat(),
-                "medical_data": st.session_state.structured_data,
-                "recommendations": st.session_state.recommendations
+                "medical_data": extract_json(json.dumps(st.session_state.structured_data)),
+                "recommendations": extract_json(st.session_state.recommendations)
             }
             
             # Convert to JSON
@@ -531,35 +718,58 @@ elif st.session_state.current_step == 'recommend':
     # Feedback mechanism
     st.header("Provide Feedback")
     st.write("Request modifications or additional information to improve the results.")
-    
-    user_feedback = st.text_area(
+
+
+    st.session_state.user_feedback = st.text_area(
         "What would you like to modify or add?",
-        placeholder="Example: 'Please add more details about medication dosages' or 'The age in the patient information is incorrect, it should be 45'"
+        value=st.session_state.user_feedback,
+        placeholder="Example: 'Please add more details about medication dosages' or 'The age in the patient information is incorrect, it should be 45'",
+        key="feedback_input"
     )
     
     if st.button("Apply Feedback", help="Process feedback and update results"):
-        if not user_feedback:
+        if not st.session_state.user_feedback.strip():
             st.warning("Please enter your feedback before submitting.")
         else:
-            logger.info(f"Processing user feedback: {user_feedback[:50]}...")
+            logger.info(f"Processing user feedback: {st.session_state.user_feedback[:50]}...")
             
             with st.spinner("Processing your feedback..."):
                 try:
+                    logger.info(f"User Feedback in UI is: **************************************{st.session_state.user_feedback}************************************************")
+
                     # Process feedback using the crew-based approach
                     updated_data = process_feedback(
                         st.session_state.structured_data,
-                        user_feedback
+                        st.session_state.user_feedback
                     )
+
+                    if isinstance(updated_data, str):
+                        updated_data = json.loads(updated_data)
+                    
+                    # Extract text will have been processed by the crew
+                    # Store any extracted text if available in the results
+                    if "extracted_text" in updated_data:
+                        st.session_state.extracted_text = updated_data["extracted_text"]
+                    else:
+                        # If not explicitly included, use the structured data as a fallback
+                        st.session_state.extracted_text = json.dumps(updated_data.model_dump(), indent=2)  
+
+                    # st.session_state.structured_data = updated_data
                     
                     # Update the session state
-                    st.session_state.structured_data = updated_data
+                    st.session_state.structured_data = extract_json(updated_data)
                     logger.info("Successfully updated data based on feedback")
+
+                    print(st.session_state.structured_data)
+
+                    data = json.dumps(updated_data.model_dump(), indent=2)
                     
                     # Regenerate recommendations
-                    recommendations_result = generate_recommendations(updated_data)
+                    recommendations_result = generate_recommendations(data)
                     st.session_state.recommendations = recommendations_result
                     logger.info("Successfully regenerated recommendations")
                     
+                    st.session_state.user_feedback = ""
                     st.success("Feedback applied successfully!")
                     st.rerun()
                 except Exception as e:
