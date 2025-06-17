@@ -296,6 +296,7 @@ def format_to_json(extracted_text: str) -> str:
         - Use standard format (DD.MM.YYYY or as presented in the document).
         - If multiple dates exist, prioritize report creation or discharge date over admission date.
         - If no date is found, output an empty string.
+        - Accept synonymous labels like "Date of Report", "Report Date", or "Issued on".
 
     3. Type of Report:
         - Identify the overall document type based on its clinical purpose and structure.
@@ -304,6 +305,7 @@ def format_to_json(extracted_text: str) -> str:
         - DO NOT list:
             - Individual tests or procedures (e.g., "CT Scan", "MRI")
             - Body parts (e.g., "Brain Report")
+        - If the report contains test names that are clearly used as report titles (e.g., "Echocardiography Report", "MRI Report", etc.), include them exactly as stated.
         - If clearly stated, extract the type directly.
         - If uncertain, infer based on structure and clinical context.
         - If no type can be determined, return an empty string.
@@ -378,19 +380,19 @@ def format_to_json(extracted_text: str) -> str:
         return json.dumps({"error": str(e)})
 
 @tool
-def process_user_feedback(structured_data: str, user_feedback: str) -> str:
+def process_user_feedback(structured_data: str, user_feedback: str, extracted_text: str = "") -> str:
     """
     Process user feedback to update the structured medical data.
     
     Args:
         structured_data (str): JSON string of the current structured data
         user_feedback (str): User's feedback or correction request
+        extracted_text (str): Original extracted text to reference for new fields
     
     Returns:
         str: Updated JSON string with the modifications
     """
     logger.info("Processing user feedback for structured data")
-    logger.debug(f"User feedback: {user_feedback}")
     
     # Parse the structured data if it's a string
     if isinstance(structured_data, str):
@@ -404,26 +406,56 @@ def process_user_feedback(structured_data: str, user_feedback: str) -> str:
         data = structured_data
         logger.debug("Using provided structured data object")
     
-    # Prompt for the LLM to process the feedback
+    
+    # Enhanced prompt for the LLM to process the feedback
     prompt = f"""
-    I have the following structured medical data:
+    You are a medical data processing specialist. Your task is to update structured medical data based on user feedback.
+
+    CURRENT STRUCTURED DATA:
     {json.dumps(data, indent=2)}
-    
-    The user has provided this feedback or correction:
+
+    ORIGINAL EXTRACTED TEXT (for reference when adding new fields):
+    {extracted_text}
+
+    USER FEEDBACK:
     "{user_feedback}"
-    
-    Please update the structured data based on this feedback. The user may be:
-    1. Correcting an existing field (e.g., fixing an incorrect age, name, or diagnosis)
-    2. Requesting to add a new field that wasn't extracted
-    3. Asking to modify how a field is presented
-    
-    Return only the updated JSON structure with no additional text.
+
+    INSTRUCTIONS:
+    Analyze the user's feedback and determine what action to take:
+
+    1. **ADDING NEW FIELDS**: If user requests to add information (e.g., "add Blood Pressure", "add Temperature", "add vital signs"):
+    - Search the original extracted text for the requested information
+    - Extract the exact values/information found
+    - Add as new field(s) to the JSON structure  
+    - If not found in original text, set value to "Not found in original report"
+
+    2. **CORRECTING EXISTING FIELDS**: If user points out errors (e.g., "age should be 45", "name is wrong"):
+    - Update the specific field with the corrected information
+    - Keep all other fields unchanged
+
+    3. **MODIFYING PRESENTATION**: If user requests format changes (e.g., "make explanation simpler", "use different wording"):
+    - Modify the specified field according to the request
+    - Maintain medical accuracy while improving presentation
+
+    4. **GENERAL REQUESTS**: If user asks for broader changes (e.g., "add more details", "include lab results"):
+    - Look for relevant information in the original extracted text
+    - Add appropriate fields based on what's available
+    - Be conservative - only add information that clearly exists in the source
+
+    IMPORTANT RULES:
+    - Base all new information strictly on the original extracted text
+    - Never invent or assume information not present in the source
+    - If information is not available, clearly state "Not found in original report"
+    - Focus precisely on what the user specifically requested
+    - Maintain the existing JSON structure and only modify what's needed
+    - Preserve all existing fields unless specifically asked to change them
+
+    OUTPUT: Return ONLY the updated JSON structure with no additional text or explanation.
     """
-    
+
     try:
         # Use the LLM to process the feedback
         logger.debug("Sending feedback to LLM for processing")
-        # response = llm.invoke(prompt)
         response = llm.call(prompt) 
         logger.debug("Received response from LLM")
         
@@ -700,18 +732,22 @@ logger.debug("Formatting Task defined")
 feedback_task = Task(
     description="""
     Process user feedback to update or correct the structured medical data.
+    You have access to both the current structured data and the original extracted text.
     
     Input:
-    1. Current structured JSON data
-    2. User feedback or correction request
+    1. {structured_data}
+    2. {user_feedback}
+    3. {extracted_text}
     
     Output: Updated JSON structure with the user's modifications applied
     
     The user may want to:
     1. Correct inaccurate information (e.g., wrong age, name, or diagnosis)
-    2. Add missing information
-    3. Request clarification or simplification of certain sections
+    2. Add missing information from the original text
+    3. Add new fields like "Blood Pressure" if they exist in the extracted text
+    4. Request clarification or simplification of certain sections
     
+    For new field requests, search the original extracted text for the requested information.
     Make appropriate changes to the structured data based on the feedback.
     """,
     expected_output="Updated structured JSON with user feedback incorporated",
@@ -821,6 +857,13 @@ def process_feedback(structured_data: Dict[str, Any], user_feedback: str) -> Dic
     logger.info("Processing user feedback as a separate operation")
     
     try:
+        # Get the original extracted text from session state or file
+        extracted_text = ""
+        if os.path.exists("extracted/extracted_text.txt"):
+            with open("extracted/extracted_text.txt", "r") as f:
+                extracted_text = f.read()
+            logger.debug("Loaded extracted text from file")
+        
         # Create a mini-crew for processing feedback
         feedback_crew = Crew(
             agents=[formatting_agent],
@@ -830,11 +873,12 @@ def process_feedback(structured_data: Dict[str, Any], user_feedback: str) -> Dic
         )
         logger.debug("Feedback crew created")
         
-        # Run the crew
+        # Run the crew with extracted text included
         result = feedback_crew.kickoff(
             inputs={
                 "structured_data": json.dumps(structured_data),
-                "user_feedback": user_feedback
+                "user_feedback" : str(user_feedback),
+                "extracted_text": str(extracted_text)
             }
         )
         logger.debug("Feedback crew completed processing")
