@@ -1,0 +1,1770 @@
+2025-06-18 02:31:55,773 - medical_pdf_processor - INFO - Starting new log session in file: logs/medical_pdf_processor_2025-06-18.log
+2025-06-18 02:31:57,591 - medical_pdf_processor - INFO - Medical RAG import successful
+2025-06-18 02:31:57,592 - medical_pdf_processor - INFO - Loaded environment variables from ../.env
+2025-06-18 02:31:57,592 - medical_pdf_processor - INFO - LLM initialized successfully
+2025-06-18 02:31:57,592 - medical_pdf_processor - INFO - Initializing EasyOCR reader for English language...
+2025-06-18 02:31:57,593 - easyocr.easyocr - WARNING - Neither CUDA nor MPS are available - defaulting to CPU. Note: This module is much faster with a GPU.
+2025-06-18 02:31:59,402 - medical_pdf_processor - INFO - EasyOCR reader initialized successfully
+2025-06-18 02:31:59,402 - medical_pdf_processor - INFO - Medical RAG import successful
+2025-06-18 02:31:59,453 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-06-18 02:31:59,999 - medical_rag - INFO - Available collections: ['umls_medical_terms']
+2025-06-18 02:31:59,999 - medical_rag - INFO - Connected to collection: umls_medical_terms
+2025-06-18 02:32:00,003 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-06-18 02:32:00,004 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-06-18 02:32:01,938 - medical_rag - INFO - Initialized sentence transformer
+2025-06-18 02:32:01,939 - medical_rag - INFO - Medical RAG system initialized successfully
+2025-06-18 02:32:01,939 - medical_pdf_processor - INFO - Medical RAG initialized with path: ../embeddings
+2025-06-18 02:32:01,940 - medical_pdf_processor - INFO - Medical RAG system loaded successfully
+2025-06-18 02:32:01,969 - medical_pdf_processor - INFO - RAG Collection Info: {'total_terms': 4526, 'collection_name': 'umls_medical_terms', 'is_operational': True}
+2025-06-18 02:32:01,978 - medical_pdf_processor - INFO - Defining CrewAI agents
+2025-06-18 02:32:01,983 - medical_pdf_processor - INFO - Defining CrewAI tasks
+2025-06-18 02:32:01,984 - medical_pdf_processor - INFO - Creating CrewAI crew with agents and tasks
+2025-06-18 02:32:01,992 - medical_pdf_processor - INFO - Medical PDF Crew created successfully
+2025-06-18 02:32:02,093 - __main__ - INFO - New session started with ID: dab2f5d4-9296-4667-a4ae-1e02b91ee006
+2025-06-18 02:33:21,252 - medical_pdf_processor - INFO - Starting new log session in file: logs/medical_pdf_processor_2025-06-18.log
+2025-06-18 02:33:23,271 - medical_pdf_processor - INFO - Medical RAG import successful
+2025-06-18 02:33:23,272 - medical_pdf_processor - INFO - Loaded environment variables from ../.env
+2025-06-18 02:33:23,272 - medical_pdf_processor - INFO - LLM initialized successfully
+2025-06-18 02:33:23,273 - medical_pdf_processor - INFO - Initializing EasyOCR reader for English language...
+2025-06-18 02:33:23,273 - easyocr.easyocr - WARNING - Neither CUDA nor MPS are available - defaulting to CPU. Note: This module is much faster with a GPU.
+2025-06-18 02:33:25,177 - medical_pdf_processor - INFO - EasyOCR reader initialized successfully
+2025-06-18 02:33:25,178 - medical_pdf_processor - INFO - Medical RAG import successful
+2025-06-18 02:33:25,228 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-06-18 02:33:25,898 - medical_rag - INFO - Available collections: ['umls_medical_terms']
+2025-06-18 02:33:25,898 - medical_rag - INFO - Connected to collection: umls_medical_terms
+2025-06-18 02:33:25,902 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-06-18 02:33:25,902 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-06-18 02:33:27,963 - medical_rag - INFO - Initialized sentence transformer
+2025-06-18 02:33:27,963 - medical_rag - INFO - Medical RAG system initialized successfully
+2025-06-18 02:33:27,964 - medical_pdf_processor - INFO - Medical RAG initialized with path: ../embeddings
+2025-06-18 02:33:27,964 - medical_pdf_processor - INFO - Medical RAG system loaded successfully
+2025-06-18 02:33:27,987 - medical_pdf_processor - INFO - RAG Collection Info: {'total_terms': 4526, 'collection_name': 'umls_medical_terms', 'is_operational': True}
+2025-06-18 02:33:27,994 - medical_pdf_processor - INFO - Defining CrewAI agents
+2025-06-18 02:33:27,999 - medical_pdf_processor - INFO - Defining CrewAI tasks
+2025-06-18 02:33:28,000 - medical_pdf_processor - INFO - Creating CrewAI crew with agents and tasks
+2025-06-18 02:33:28,008 - medical_pdf_processor - INFO - Medical PDF Crew created successfully
+2025-06-18 02:33:28,058 - __main__ - INFO - New session started with ID: 6f177f0b-fd9d-4a0b-9986-610173262d73
+2025-06-18 02:33:28,266 - __main__ - INFO - New session started with ID: 7ec864f0-06c7-42f0-833a-70a28b4a5409
+2025-06-18 02:38:07,300 - __main__ - INFO - User uploaded file: Screenshot 2025-06-16 151506.png
+2025-06-18 02:38:10,416 - __main__ - INFO - User uploaded file: Screenshot 2025-06-16 151506.png
+2025-06-18 02:38:10,420 - __main__ - INFO - Starting PDF processing for Screenshot 2025-06-16 151506.png
+2025-06-18 02:38:10,430 - __main__ - INFO - Saved uploaded file to: uploads\Screenshot 2025-06-16 151506.png
+2025-06-18 02:38:10,431 - medical_pdf_processor - INFO - Starting full image processing workflow for: uploads\Screenshot 2025-06-16 151506.png
+2025-06-18 02:38:10,522 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-2.0-flash; provider = gemini
+2025-06-18 02:38:11,960 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:38:11,964 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:38:11,965 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-2.0-flash
+2025-06-18 02:38:11,965 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-2.0-flash
+2025-06-18 02:38:12,050 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-2.0-flash
+2025-06-18 02:38:12,090 - medical_pdf_processor - INFO - Starting text extraction from image: uploads\Screenshot 2025-06-16 151506.png
+2025-06-18 02:38:18,700 - medical_pdf_processor - INFO - Text extraction complete. Extracted 630 characters
+2025-06-18 02:38:18,729 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-2.0-flash; provider = gemini
+2025-06-18 02:38:19,504 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 429 Too Many Requests"
+2025-06-18 02:38:19,703 - root - ERROR - LiteLLM call failed: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "model": "gemini-2.0-flash",
+              "location": "global"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "40s"
+      }
+    ]
+  }
+}
+
+2025-06-18 02:38:19,708 - medical_pdf_processor - ERROR - Error processing image: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "model": "gemini-2.0-flash",
+              "location": "global"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "40s"
+      }
+    ]
+  }
+}
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\vertex_ai\gemini\vertex_and_google_ai_studio_gemini.py", line 1698, in completion
+    response = client.post(url=url, headers=headers, json=data)  # type: ignore
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\custom_httpx\http_handler.py", line 704, in post
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\custom_httpx\http_handler.py", line 686, in post
+    response.raise_for_status()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\httpx\_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\main.py", line 2446, in completion
+    response = vertex_chat_completion.completion(  # type: ignore
+        model=model,
+    ...<17 lines>...
+        extra_headers=extra_headers,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\vertex_ai\gemini\vertex_and_google_ai_studio_gemini.py", line 1702, in completion
+    raise VertexAIError(
+    ...<3 lines>...
+    )
+litellm.llms.vertex_ai.common_utils.VertexAIError: {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "model": "gemini-2.0-flash",
+              "location": "global"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "40s"
+      }
+    ]
+  }
+}
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\Trial_Notebooks\medical_pdf_processor.py", line 919, in process_image
+    result = medical_image_crew.kickoff(inputs={"image_path": image_path})
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 659, in kickoff
+    result = self._run_sequential_process()
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 768, in _run_sequential_process
+    return self._execute_tasks(self.tasks)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 871, in _execute_tasks
+    task_output = task.execute_sync(
+        agent=agent_to_use,
+        context=context,
+        tools=cast(List[BaseTool], tools_for_task),
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 351, in execute_sync
+    return self._execute_core(agent, context, tools)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 499, in _execute_core
+    raise e  # Re-raise the exception after emitting the event
+    ^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 415, in _execute_core
+    result = agent.execute_task(
+        task=self,
+        context=context,
+        tools=tools,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 435, in execute_task
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 411, in execute_task
+    result = self._execute_without_timeout(task_prompt, task)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 507, in _execute_without_timeout
+    return self.agent_executor.invoke(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<4 lines>...
+        }
+        ^
+    )["output"]
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 121, in invoke
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 110, in invoke
+    formatted_answer = self._invoke_loop()
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 206, in _invoke_loop
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 153, in _invoke_loop
+    answer = get_llm_response(
+        llm=self.llm,
+    ...<2 lines>...
+        printer=self._printer,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\utilities\agent_utils.py", line 160, in get_llm_response
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\utilities\agent_utils.py", line 151, in get_llm_response
+    answer = llm.call(
+        messages,
+        callbacks=callbacks,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\llm.py", line 956, in call
+    return self._handle_non_streaming_response(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        params, callbacks, available_functions
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\llm.py", line 768, in _handle_non_streaming_response
+    response = litellm.completion(**params)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\utils.py", line 1283, in wrapper
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\utils.py", line 1161, in wrapper
+    result = original_function(*args, **kwargs)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\main.py", line 3241, in completion
+    raise exception_type(
+          ~~~~~~~~~~~~~~^
+        model=model,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        extra_kwargs=kwargs,
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\litellm_core_utils\exception_mapping_utils.py", line 2239, in exception_type
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\litellm_core_utils\exception_mapping_utils.py", line 1276, in exception_type
+    raise RateLimitError(
+    ...<11 lines>...
+    )
+litellm.exceptions.RateLimitError: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "model": "gemini-2.0-flash",
+              "location": "global"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "40s"
+      }
+    ]
+  }
+}
+
+2025-06-18 02:38:19,871 - __main__ - ERROR - Error processing the PDF: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "model": "gemini-2.0-flash",
+              "location": "global"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "40s"
+      }
+    ]
+  }
+}
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\vertex_ai\gemini\vertex_and_google_ai_studio_gemini.py", line 1698, in completion
+    response = client.post(url=url, headers=headers, json=data)  # type: ignore
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\custom_httpx\http_handler.py", line 704, in post
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\custom_httpx\http_handler.py", line 686, in post
+    response.raise_for_status()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\httpx\_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\main.py", line 2446, in completion
+    response = vertex_chat_completion.completion(  # type: ignore
+        model=model,
+    ...<17 lines>...
+        extra_headers=extra_headers,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\vertex_ai\gemini\vertex_and_google_ai_studio_gemini.py", line 1702, in completion
+    raise VertexAIError(
+    ...<3 lines>...
+    )
+litellm.llms.vertex_ai.common_utils.VertexAIError: {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "model": "gemini-2.0-flash",
+              "location": "global"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "40s"
+      }
+    ]
+  }
+}
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\Trial_Notebooks\UI.py", line 246, in <module>
+    result = process_image(image_path)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\Trial_Notebooks\medical_pdf_processor.py", line 919, in process_image
+    result = medical_image_crew.kickoff(inputs={"image_path": image_path})
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 659, in kickoff
+    result = self._run_sequential_process()
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 768, in _run_sequential_process
+    return self._execute_tasks(self.tasks)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 871, in _execute_tasks
+    task_output = task.execute_sync(
+        agent=agent_to_use,
+        context=context,
+        tools=cast(List[BaseTool], tools_for_task),
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 351, in execute_sync
+    return self._execute_core(agent, context, tools)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 499, in _execute_core
+    raise e  # Re-raise the exception after emitting the event
+    ^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 415, in _execute_core
+    result = agent.execute_task(
+        task=self,
+        context=context,
+        tools=tools,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 435, in execute_task
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 411, in execute_task
+    result = self._execute_without_timeout(task_prompt, task)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 507, in _execute_without_timeout
+    return self.agent_executor.invoke(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<4 lines>...
+        }
+        ^
+    )["output"]
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 121, in invoke
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 110, in invoke
+    formatted_answer = self._invoke_loop()
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 206, in _invoke_loop
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 153, in _invoke_loop
+    answer = get_llm_response(
+        llm=self.llm,
+    ...<2 lines>...
+        printer=self._printer,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\utilities\agent_utils.py", line 160, in get_llm_response
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\utilities\agent_utils.py", line 151, in get_llm_response
+    answer = llm.call(
+        messages,
+        callbacks=callbacks,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\llm.py", line 956, in call
+    return self._handle_non_streaming_response(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        params, callbacks, available_functions
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\llm.py", line 768, in _handle_non_streaming_response
+    response = litellm.completion(**params)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\utils.py", line 1283, in wrapper
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\utils.py", line 1161, in wrapper
+    result = original_function(*args, **kwargs)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\main.py", line 3241, in completion
+    raise exception_type(
+          ~~~~~~~~~~~~~~^
+        model=model,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        extra_kwargs=kwargs,
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\litellm_core_utils\exception_mapping_utils.py", line 2239, in exception_type
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\litellm_core_utils\exception_mapping_utils.py", line 1276, in exception_type
+    raise RateLimitError(
+    ...<11 lines>...
+    )
+litellm.exceptions.RateLimitError: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "model": "gemini-2.0-flash",
+              "location": "global"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "40s"
+      }
+    ]
+  }
+}
+
+2025-06-18 02:40:12,446 - __main__ - INFO - User uploaded file: Screenshot 2025-06-16 151506.png
+2025-06-18 02:40:12,448 - __main__ - INFO - Starting PDF processing for Screenshot 2025-06-16 151506.png
+2025-06-18 02:40:12,451 - __main__ - INFO - Saved uploaded file to: uploads\Screenshot 2025-06-16 151506.png
+2025-06-18 02:40:12,452 - medical_pdf_processor - INFO - Starting full image processing workflow for: uploads\Screenshot 2025-06-16 151506.png
+2025-06-18 02:40:12,481 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-2.0-flash; provider = gemini
+2025-06-18 02:40:13,776 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 429 Too Many Requests"
+2025-06-18 02:40:13,797 - root - ERROR - LiteLLM call failed: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "46s"
+      }
+    ]
+  }
+}
+
+2025-06-18 02:40:13,802 - medical_pdf_processor - ERROR - Error processing image: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "46s"
+      }
+    ]
+  }
+}
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\vertex_ai\gemini\vertex_and_google_ai_studio_gemini.py", line 1698, in completion
+    response = client.post(url=url, headers=headers, json=data)  # type: ignore
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\custom_httpx\http_handler.py", line 704, in post
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\custom_httpx\http_handler.py", line 686, in post
+    response.raise_for_status()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\httpx\_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\main.py", line 2446, in completion
+    response = vertex_chat_completion.completion(  # type: ignore
+        model=model,
+    ...<17 lines>...
+        extra_headers=extra_headers,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\vertex_ai\gemini\vertex_and_google_ai_studio_gemini.py", line 1702, in completion
+    raise VertexAIError(
+    ...<3 lines>...
+    )
+litellm.llms.vertex_ai.common_utils.VertexAIError: {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "46s"
+      }
+    ]
+  }
+}
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\Trial_Notebooks\medical_pdf_processor.py", line 919, in process_image
+    result = medical_image_crew.kickoff(inputs={"image_path": image_path})
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 659, in kickoff
+    result = self._run_sequential_process()
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 768, in _run_sequential_process
+    return self._execute_tasks(self.tasks)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 871, in _execute_tasks
+    task_output = task.execute_sync(
+        agent=agent_to_use,
+        context=context,
+        tools=cast(List[BaseTool], tools_for_task),
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 351, in execute_sync
+    return self._execute_core(agent, context, tools)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 499, in _execute_core
+    raise e  # Re-raise the exception after emitting the event
+    ^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 415, in _execute_core
+    result = agent.execute_task(
+        task=self,
+        context=context,
+        tools=tools,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 435, in execute_task
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 411, in execute_task
+    result = self._execute_without_timeout(task_prompt, task)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 507, in _execute_without_timeout
+    return self.agent_executor.invoke(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<4 lines>...
+        }
+        ^
+    )["output"]
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 121, in invoke
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 110, in invoke
+    formatted_answer = self._invoke_loop()
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 206, in _invoke_loop
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 153, in _invoke_loop
+    answer = get_llm_response(
+        llm=self.llm,
+    ...<2 lines>...
+        printer=self._printer,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\utilities\agent_utils.py", line 160, in get_llm_response
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\utilities\agent_utils.py", line 151, in get_llm_response
+    answer = llm.call(
+        messages,
+        callbacks=callbacks,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\llm.py", line 956, in call
+    return self._handle_non_streaming_response(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        params, callbacks, available_functions
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\llm.py", line 768, in _handle_non_streaming_response
+    response = litellm.completion(**params)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\utils.py", line 1283, in wrapper
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\utils.py", line 1161, in wrapper
+    result = original_function(*args, **kwargs)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\main.py", line 3241, in completion
+    raise exception_type(
+          ~~~~~~~~~~~~~~^
+        model=model,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        extra_kwargs=kwargs,
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\litellm_core_utils\exception_mapping_utils.py", line 2239, in exception_type
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\litellm_core_utils\exception_mapping_utils.py", line 1276, in exception_type
+    raise RateLimitError(
+    ...<11 lines>...
+    )
+litellm.exceptions.RateLimitError: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "46s"
+      }
+    ]
+  }
+}
+
+2025-06-18 02:40:13,813 - __main__ - ERROR - Error processing the PDF: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "46s"
+      }
+    ]
+  }
+}
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\vertex_ai\gemini\vertex_and_google_ai_studio_gemini.py", line 1698, in completion
+    response = client.post(url=url, headers=headers, json=data)  # type: ignore
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\custom_httpx\http_handler.py", line 704, in post
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\custom_httpx\http_handler.py", line 686, in post
+    response.raise_for_status()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\httpx\_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\main.py", line 2446, in completion
+    response = vertex_chat_completion.completion(  # type: ignore
+        model=model,
+    ...<17 lines>...
+        extra_headers=extra_headers,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\vertex_ai\gemini\vertex_and_google_ai_studio_gemini.py", line 1702, in completion
+    raise VertexAIError(
+    ...<3 lines>...
+    )
+litellm.llms.vertex_ai.common_utils.VertexAIError: {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "46s"
+      }
+    ]
+  }
+}
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\Trial_Notebooks\UI.py", line 246, in <module>
+    result = process_image(image_path)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\Trial_Notebooks\medical_pdf_processor.py", line 919, in process_image
+    result = medical_image_crew.kickoff(inputs={"image_path": image_path})
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 659, in kickoff
+    result = self._run_sequential_process()
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 768, in _run_sequential_process
+    return self._execute_tasks(self.tasks)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 871, in _execute_tasks
+    task_output = task.execute_sync(
+        agent=agent_to_use,
+        context=context,
+        tools=cast(List[BaseTool], tools_for_task),
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 351, in execute_sync
+    return self._execute_core(agent, context, tools)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 499, in _execute_core
+    raise e  # Re-raise the exception after emitting the event
+    ^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 415, in _execute_core
+    result = agent.execute_task(
+        task=self,
+        context=context,
+        tools=tools,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 435, in execute_task
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 411, in execute_task
+    result = self._execute_without_timeout(task_prompt, task)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 507, in _execute_without_timeout
+    return self.agent_executor.invoke(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<4 lines>...
+        }
+        ^
+    )["output"]
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 121, in invoke
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 110, in invoke
+    formatted_answer = self._invoke_loop()
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 206, in _invoke_loop
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 153, in _invoke_loop
+    answer = get_llm_response(
+        llm=self.llm,
+    ...<2 lines>...
+        printer=self._printer,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\utilities\agent_utils.py", line 160, in get_llm_response
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\utilities\agent_utils.py", line 151, in get_llm_response
+    answer = llm.call(
+        messages,
+        callbacks=callbacks,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\llm.py", line 956, in call
+    return self._handle_non_streaming_response(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        params, callbacks, available_functions
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\llm.py", line 768, in _handle_non_streaming_response
+    response = litellm.completion(**params)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\utils.py", line 1283, in wrapper
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\utils.py", line 1161, in wrapper
+    result = original_function(*args, **kwargs)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\main.py", line 3241, in completion
+    raise exception_type(
+          ~~~~~~~~~~~~~~^
+        model=model,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        extra_kwargs=kwargs,
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\litellm_core_utils\exception_mapping_utils.py", line 2239, in exception_type
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\litellm_core_utils\exception_mapping_utils.py", line 1276, in exception_type
+    raise RateLimitError(
+    ...<11 lines>...
+    )
+litellm.exceptions.RateLimitError: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "46s"
+      }
+    ]
+  }
+}
+
+2025-06-18 02:42:33,947 - __main__ - INFO - User uploaded file: Screenshot 2025-01-28 224038.png
+2025-06-18 02:42:36,138 - __main__ - INFO - User uploaded file: Screenshot 2025-01-28 224038.png
+2025-06-18 02:42:36,140 - __main__ - INFO - Starting PDF processing for Screenshot 2025-01-28 224038.png
+2025-06-18 02:42:36,143 - __main__ - INFO - Saved uploaded file to: uploads\Screenshot 2025-01-28 224038.png
+2025-06-18 02:42:36,143 - medical_pdf_processor - INFO - Starting full image processing workflow for: uploads\Screenshot 2025-01-28 224038.png
+2025-06-18 02:42:36,171 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-2.0-flash; provider = gemini
+2025-06-18 02:42:37,284 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 429 Too Many Requests"
+2025-06-18 02:42:37,333 - root - ERROR - LiteLLM call failed: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "22s"
+      }
+    ]
+  }
+}
+
+2025-06-18 02:42:37,339 - medical_pdf_processor - ERROR - Error processing image: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "22s"
+      }
+    ]
+  }
+}
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\vertex_ai\gemini\vertex_and_google_ai_studio_gemini.py", line 1698, in completion
+    response = client.post(url=url, headers=headers, json=data)  # type: ignore
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\custom_httpx\http_handler.py", line 704, in post
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\custom_httpx\http_handler.py", line 686, in post
+    response.raise_for_status()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\httpx\_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\main.py", line 2446, in completion
+    response = vertex_chat_completion.completion(  # type: ignore
+        model=model,
+    ...<17 lines>...
+        extra_headers=extra_headers,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\vertex_ai\gemini\vertex_and_google_ai_studio_gemini.py", line 1702, in completion
+    raise VertexAIError(
+    ...<3 lines>...
+    )
+litellm.llms.vertex_ai.common_utils.VertexAIError: {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "22s"
+      }
+    ]
+  }
+}
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\Trial_Notebooks\medical_pdf_processor.py", line 919, in process_image
+    result = medical_image_crew.kickoff(inputs={"image_path": image_path})
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 659, in kickoff
+    result = self._run_sequential_process()
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 768, in _run_sequential_process
+    return self._execute_tasks(self.tasks)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 871, in _execute_tasks
+    task_output = task.execute_sync(
+        agent=agent_to_use,
+        context=context,
+        tools=cast(List[BaseTool], tools_for_task),
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 351, in execute_sync
+    return self._execute_core(agent, context, tools)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 499, in _execute_core
+    raise e  # Re-raise the exception after emitting the event
+    ^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 415, in _execute_core
+    result = agent.execute_task(
+        task=self,
+        context=context,
+        tools=tools,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 435, in execute_task
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 411, in execute_task
+    result = self._execute_without_timeout(task_prompt, task)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 507, in _execute_without_timeout
+    return self.agent_executor.invoke(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<4 lines>...
+        }
+        ^
+    )["output"]
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 121, in invoke
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 110, in invoke
+    formatted_answer = self._invoke_loop()
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 206, in _invoke_loop
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 153, in _invoke_loop
+    answer = get_llm_response(
+        llm=self.llm,
+    ...<2 lines>...
+        printer=self._printer,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\utilities\agent_utils.py", line 160, in get_llm_response
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\utilities\agent_utils.py", line 151, in get_llm_response
+    answer = llm.call(
+        messages,
+        callbacks=callbacks,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\llm.py", line 956, in call
+    return self._handle_non_streaming_response(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        params, callbacks, available_functions
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\llm.py", line 768, in _handle_non_streaming_response
+    response = litellm.completion(**params)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\utils.py", line 1283, in wrapper
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\utils.py", line 1161, in wrapper
+    result = original_function(*args, **kwargs)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\main.py", line 3241, in completion
+    raise exception_type(
+          ~~~~~~~~~~~~~~^
+        model=model,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        extra_kwargs=kwargs,
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\litellm_core_utils\exception_mapping_utils.py", line 2239, in exception_type
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\litellm_core_utils\exception_mapping_utils.py", line 1276, in exception_type
+    raise RateLimitError(
+    ...<11 lines>...
+    )
+litellm.exceptions.RateLimitError: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "22s"
+      }
+    ]
+  }
+}
+
+2025-06-18 02:42:37,353 - __main__ - ERROR - Error processing the PDF: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "22s"
+      }
+    ]
+  }
+}
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\vertex_ai\gemini\vertex_and_google_ai_studio_gemini.py", line 1698, in completion
+    response = client.post(url=url, headers=headers, json=data)  # type: ignore
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\custom_httpx\http_handler.py", line 704, in post
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\custom_httpx\http_handler.py", line 686, in post
+    response.raise_for_status()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\httpx\_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\main.py", line 2446, in completion
+    response = vertex_chat_completion.completion(  # type: ignore
+        model=model,
+    ...<17 lines>...
+        extra_headers=extra_headers,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\llms\vertex_ai\gemini\vertex_and_google_ai_studio_gemini.py", line 1702, in completion
+    raise VertexAIError(
+    ...<3 lines>...
+    )
+litellm.llms.vertex_ai.common_utils.VertexAIError: {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "22s"
+      }
+    ]
+  }
+}
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\Trial_Notebooks\UI.py", line 246, in <module>
+    result = process_image(image_path)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\Trial_Notebooks\medical_pdf_processor.py", line 919, in process_image
+    result = medical_image_crew.kickoff(inputs={"image_path": image_path})
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 659, in kickoff
+    result = self._run_sequential_process()
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 768, in _run_sequential_process
+    return self._execute_tasks(self.tasks)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\crew.py", line 871, in _execute_tasks
+    task_output = task.execute_sync(
+        agent=agent_to_use,
+        context=context,
+        tools=cast(List[BaseTool], tools_for_task),
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 351, in execute_sync
+    return self._execute_core(agent, context, tools)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 499, in _execute_core
+    raise e  # Re-raise the exception after emitting the event
+    ^^^^^^^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\task.py", line 415, in _execute_core
+    result = agent.execute_task(
+        task=self,
+        context=context,
+        tools=tools,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 435, in execute_task
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 411, in execute_task
+    result = self._execute_without_timeout(task_prompt, task)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agent.py", line 507, in _execute_without_timeout
+    return self.agent_executor.invoke(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<4 lines>...
+        }
+        ^
+    )["output"]
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 121, in invoke
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 110, in invoke
+    formatted_answer = self._invoke_loop()
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 206, in _invoke_loop
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\agents\crew_agent_executor.py", line 153, in _invoke_loop
+    answer = get_llm_response(
+        llm=self.llm,
+    ...<2 lines>...
+        printer=self._printer,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\utilities\agent_utils.py", line 160, in get_llm_response
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\utilities\agent_utils.py", line 151, in get_llm_response
+    answer = llm.call(
+        messages,
+        callbacks=callbacks,
+    )
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\llm.py", line 956, in call
+    return self._handle_non_streaming_response(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        params, callbacks, available_functions
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\crewai\llm.py", line 768, in _handle_non_streaming_response
+    response = litellm.completion(**params)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\utils.py", line 1283, in wrapper
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\utils.py", line 1161, in wrapper
+    result = original_function(*args, **kwargs)
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\main.py", line 3241, in completion
+    raise exception_type(
+          ~~~~~~~~~~~~~~^
+        model=model,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        extra_kwargs=kwargs,
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\litellm_core_utils\exception_mapping_utils.py", line 2239, in exception_type
+    raise e
+  File "D:\Github Repos\SW_testing_project\Medical-Extractor\venv\Lib\site-packages\litellm\litellm_core_utils\exception_mapping_utils.py", line 1276, in exception_type
+    raise RateLimitError(
+    ...<11 lines>...
+    )
+litellm.exceptions.RateLimitError: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+    "status": "RESOURCE_EXHAUSTED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+        "violations": [
+          {
+            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+            "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quotaDimensions": {
+              "location": "global",
+              "model": "gemini-2.0-flash"
+            },
+            "quotaValue": "1000"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Learn more about Gemini API quotas",
+            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+        "retryDelay": "22s"
+      }
+    ]
+  }
+}
+
+2025-06-18 02:44:52,121 - medical_pdf_processor - INFO - Starting new log session in file: logs/medical_pdf_processor_2025-06-18.log
+2025-06-18 02:44:58,671 - medical_pdf_processor - INFO - Medical RAG import successful
+2025-06-18 02:44:58,672 - medical_pdf_processor - INFO - Loaded environment variables from ../.env
+2025-06-18 02:44:58,673 - medical_pdf_processor - INFO - LLM initialized successfully
+2025-06-18 02:44:58,673 - medical_pdf_processor - INFO - Initializing EasyOCR reader for English language...
+2025-06-18 02:44:58,673 - easyocr.easyocr - WARNING - Neither CUDA nor MPS are available - defaulting to CPU. Note: This module is much faster with a GPU.
+2025-06-18 02:45:00,575 - medical_pdf_processor - INFO - EasyOCR reader initialized successfully
+2025-06-18 02:45:00,575 - medical_pdf_processor - INFO - Medical RAG import successful
+2025-06-18 02:45:00,626 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-06-18 02:45:01,105 - medical_rag - INFO - Available collections: ['umls_medical_terms']
+2025-06-18 02:45:01,106 - medical_rag - INFO - Connected to collection: umls_medical_terms
+2025-06-18 02:45:01,109 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-06-18 02:45:01,109 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-06-18 02:45:03,140 - medical_rag - INFO - Initialized sentence transformer
+2025-06-18 02:45:03,141 - medical_rag - INFO - Medical RAG system initialized successfully
+2025-06-18 02:45:03,141 - medical_pdf_processor - INFO - Medical RAG initialized with path: ../embeddings
+2025-06-18 02:45:03,141 - medical_pdf_processor - INFO - Medical RAG system loaded successfully
+2025-06-18 02:45:03,166 - medical_pdf_processor - INFO - RAG Collection Info: {'total_terms': 4526, 'collection_name': 'umls_medical_terms', 'is_operational': True}
+2025-06-18 02:45:03,174 - medical_pdf_processor - INFO - Defining CrewAI agents
+2025-06-18 02:45:03,178 - medical_pdf_processor - INFO - Defining CrewAI tasks
+2025-06-18 02:45:03,189 - medical_pdf_processor - INFO - Creating CrewAI crew with agents and tasks
+2025-06-18 02:45:03,395 - medical_pdf_processor - INFO - Medical PDF Crew created successfully
+2025-06-18 02:45:03,823 - __main__ - INFO - New session started with ID: 27fabce2-d32d-44db-8ee5-14d02ae756dd
+2025-06-18 02:45:06,142 - __main__ - INFO - New session started with ID: 6da86e3c-a2b1-4f51-8e16-3aa38e45c6b3
+2025-06-18 02:45:55,374 - __main__ - INFO - User uploaded file: Screenshot 2025-01-28 224038.png
+2025-06-18 02:46:03,349 - __main__ - INFO - User uploaded file: Screenshot 2025-01-28 224038.png
+2025-06-18 02:46:03,352 - __main__ - INFO - Starting PDF processing for Screenshot 2025-01-28 224038.png
+2025-06-18 02:46:03,354 - __main__ - INFO - Saved uploaded file to: uploads\Screenshot 2025-01-28 224038.png
+2025-06-18 02:46:03,354 - medical_pdf_processor - INFO - Starting full image processing workflow for: uploads\Screenshot 2025-01-28 224038.png
+2025-06-18 02:46:03,402 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:46:05,037 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:46:05,046 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:46:05,048 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:05,049 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:05,051 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:05,064 - medical_pdf_processor - INFO - Starting text extraction from image: uploads\Screenshot 2025-01-28 224038.png
+2025-06-18 02:46:08,891 - medical_pdf_processor - INFO - Text extraction complete. Extracted 582 characters
+2025-06-18 02:46:08,907 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:46:11,562 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:46:11,566 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:46:11,566 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:11,567 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:11,574 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:11,607 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:46:14,572 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:46:14,574 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:46:14,574 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:14,574 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:14,576 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:14,578 - medical_pdf_processor - INFO - Starting medical data validation
+2025-06-18 02:46:14,579 - medical_pdf_processor - INFO - Performing UMLS medical term validation
+2025-06-18 02:46:16,248 - medical_pdf_processor - INFO - RAG Validation Complete: 2/2 terms validated
+2025-06-18 02:46:16,249 - medical_pdf_processor - INFO - Validation complete - No critical issues
+2025-06-18 02:46:16,276 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:46:22,615 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:46:22,618 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:46:22,618 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:22,619 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:22,624 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:22,675 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:46:24,981 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:46:24,987 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:46:24,988 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:24,989 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:24,997 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:25,004 - medical_pdf_processor - INFO - Starting formatting of extracted text to JSON
+2025-06-18 02:46:25,007 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:46:26,904 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:46:26,906 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:46:26,907 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:26,907 - medical_pdf_processor - INFO - Successfully structured the data into JSON format
+2025-06-18 02:46:26,907 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:26,908 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:26,933 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:46:29,043 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:46:29,048 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:46:29,049 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:29,049 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:29,061 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:29,088 - medical_pdf_processor - INFO - Image processing completed in 25.73 seconds
+2025-06-18 02:46:29,089 - __main__ - INFO - CrewAI processing completed successfully
+2025-06-18 02:46:29,109 - __main__ - INFO - Moving to verification step
+2025-06-18 02:46:53,183 - __main__ - INFO - User verified data and requested recommendations
+2025-06-18 02:46:53,185 - medical_pdf_processor - INFO - Generating recommendations as a separate operation
+2025-06-18 02:46:53,213 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:46:55,277 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:46:55,278 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:46:55,279 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:55,279 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:55,283 - medical_pdf_processor - INFO - Generating medical recommendations based on structured data
+2025-06-18 02:46:55,283 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:55,284 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:46:59,598 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:46:59,599 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:46:59,599 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:59,600 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:59,600 - medical_pdf_processor - INFO - Successfully generated 5 recommendations
+2025-06-18 02:46:59,601 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:46:59,618 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:47:03,918 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:47:03,920 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:47:03,920 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:47:03,920 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:47:03,922 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:47:03,946 - medical_pdf_processor - INFO - Recommendation generation completed successfully
+2025-06-18 02:47:03,946 - __main__ - INFO - Successfully generated recommendations
+2025-06-18 02:47:03,947 - __main__ - INFO - Moving to recommendations step
+2025-06-18 02:48:10,348 - __main__ - INFO - User chose to start over
+2025-06-18 02:48:10,349 - __main__ - INFO - Generated new session ID: b1f44184-8a3e-47a6-84ea-e79362d4521e
+2025-06-18 02:49:07,484 - __main__ - INFO - User uploaded file: Screenshot 2025-06-16 151506.png
+2025-06-18 02:49:09,715 - __main__ - INFO - User uploaded file: Screenshot 2025-06-16 151506.png
+2025-06-18 02:49:09,717 - __main__ - INFO - Starting PDF processing for Screenshot 2025-06-16 151506.png
+2025-06-18 02:49:09,719 - __main__ - INFO - Saved uploaded file to: uploads\Screenshot 2025-06-16 151506.png
+2025-06-18 02:49:09,720 - medical_pdf_processor - INFO - Starting full image processing workflow for: uploads\Screenshot 2025-06-16 151506.png
+2025-06-18 02:49:09,741 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:49:11,595 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:49:11,600 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:49:11,601 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:11,602 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:11,606 - medical_pdf_processor - INFO - Starting text extraction from image: uploads\Screenshot 2025-06-16 151506.png
+2025-06-18 02:49:11,606 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:14,291 - medical_pdf_processor - INFO - Text extraction complete. Extracted 630 characters
+2025-06-18 02:49:14,309 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:49:16,815 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:49:16,819 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:49:16,820 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:16,821 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:16,827 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:16,853 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:49:19,551 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:49:19,553 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:49:19,553 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:19,553 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:19,555 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:19,558 - medical_pdf_processor - INFO - Starting medical data validation
+2025-06-18 02:49:19,558 - medical_pdf_processor - INFO - Performing UMLS medical term validation
+2025-06-18 02:49:22,670 - medical_pdf_processor - INFO - RAG Validation Complete: 9/9 terms validated
+2025-06-18 02:49:22,670 - medical_pdf_processor - INFO - Validation complete - No critical issues
+2025-06-18 02:49:22,701 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:49:28,782 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:49:28,787 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:49:28,788 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:28,789 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:28,793 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:28,821 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:49:31,738 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:49:31,743 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:49:31,744 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:31,744 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:31,752 - medical_pdf_processor - INFO - Starting formatting of extracted text to JSON
+2025-06-18 02:49:31,752 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:31,753 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:49:33,555 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:49:33,556 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:49:33,557 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:33,557 - medical_pdf_processor - INFO - Successfully structured the data into JSON format
+2025-06-18 02:49:33,557 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:33,558 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:33,581 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:49:36,089 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:49:36,092 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:49:36,093 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:36,093 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:36,096 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:49:36,118 - medical_pdf_processor - INFO - Image processing completed in 26.40 seconds
+2025-06-18 02:49:36,119 - __main__ - INFO - CrewAI processing completed successfully
+2025-06-18 02:49:36,119 - __main__ - INFO - Moving to verification step
+2025-06-18 02:54:07,308 - __main__ - INFO - User verified data and requested recommendations
+2025-06-18 02:54:07,310 - medical_pdf_processor - INFO - Generating recommendations as a separate operation
+2025-06-18 02:54:07,341 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:54:10,122 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:54:10,124 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:54:10,124 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:54:10,124 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:54:10,126 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:54:10,191 - medical_pdf_processor - INFO - Generating medical recommendations based on structured data
+2025-06-18 02:54:10,193 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:54:14,164 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:54:14,165 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:54:14,165 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:54:14,165 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:54:14,166 - medical_pdf_processor - INFO - Successfully generated 4 recommendations
+2025-06-18 02:54:14,166 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:54:14,182 - LiteLLM - INFO - 
+LiteLLM completion() model= gemini-1.5-flash; provider = gemini
+2025-06-18 02:54:18,233 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCKunas-33LY8BYHcFNo7dAlzvPOuJbgd8 "HTTP/1.1 200 OK"
+2025-06-18 02:54:18,234 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-18 02:54:18,235 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:54:18,235 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:54:18,237 - LiteLLM - INFO - selected model name for cost calculation: gemini/gemini-1.5-flash
+2025-06-18 02:54:18,253 - medical_pdf_processor - INFO - Recommendation generation completed successfully
+2025-06-18 02:54:18,254 - __main__ - INFO - Successfully generated recommendations
+2025-06-18 02:54:18,255 - __main__ - INFO - Moving to recommendations step

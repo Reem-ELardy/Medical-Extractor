@@ -62,40 +62,57 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 logger.info(f"Starting new log session in file: {log_filename}")
+try:
+    from medical_rag import MedicalRAG  # Import from same directory
+    logger.info("Medical RAG import successful")
+except ImportError as e:
+    logger.error(f"Failed to import Medical RAG: {e}")
+    logger.warning("RAG functionality will not be available")
+    MedicalRAG = None
+# Load environment variables from .env file
+def load_environment():
+    """Load environment variables from .env file"""
+    possible_paths = [
+        ".env",           # Current directory
+        "../.env",        # Parent directory
+        "../../.env"      # Grandparent directory
+    ]
+    
+    env_loaded = False
+    for env_path in possible_paths:
+        if os.path.exists(env_path):
+            load_dotenv(dotenv_path=env_path)
+            if os.getenv("GEMINI_API_KEY"):
+                logger.info(f"Loaded environment variables from {env_path}")
+                env_loaded = True
+                break
+    
+    if not env_loaded:
+        logger.warning("No .env file found with GEMINI_API_KEY")
+        logger.info("Please ensure you have a .env file with GEMINI_API_KEY set")
+    
+    return env_loaded
 
-# Load environment variables
-# Try several possible locations for the .env file
-possible_paths = [
-    ".env",                         # Current directory
-    "../.env",                      # Parent directory
-    os.path.expanduser("~/.env")    # Home directory
-]
+# Initialize environment
+env_loaded = load_environment()
 
-env_loaded = False
-for path in possible_paths:
-    if os.path.exists(path):
-        load_dotenv(dotenv_path=path)
-        if os.getenv("GEMINI_API_KEY"):
-            logger.info(f"Loaded environment variables from {path}")
-            env_loaded = True
-            break
-
-if not env_loaded:
-    logger.error("Could not find .env file with GEMINI_API_KEY")
-    raise FileNotFoundError("No .env file with GEMINI_API_KEY found")
-
-# Check if the API key is set
+# Initialize LLM with API key from environment
 def initialize_llm():
+    """Initialize the LLM with API key from environment"""
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY not found in environment variables")
+    
     return LLM(
-        model='gemini/gemini-2.0-flash',
+        model='gemini/gemini-1.5-flash',
         provider="google",
-        api_key=os.getenv("GEMINI_API_KEY"),
+        api_key=api_key,
         temperature=0
     )
 
 # Initialize LLM
 try:
-    llm = initialize_llm() 
+    llm = initialize_llm()
     logger.info("LLM initialized successfully")
 except Exception as e:
     logger.error(f"Failed to initialize LLM: {e}")
@@ -110,6 +127,50 @@ except Exception as e:
     logger.error(f"Failed to initialize EasyOCR: {e}")
     raise
 
+# Validate critical imports
+try:
+    from medical_rag import MedicalRAG
+    logger.info("Medical RAG import successful")
+except ImportError as e:
+    logger.error(f"Failed to import Medical RAG: {e}")
+    logger.warning("RAG functionality will not be available")
+    MedicalRAG = None
+# Initialize Medical RAG system with proper path handling
+def initialize_medical_rag():
+    """Initialize Medical RAG system with robust path handling"""
+    possible_paths = [
+        "./embeddings",           # Current directory
+        "../embeddings",          # Parent directory  
+        "./chroma_db",           # Alternative name
+        "../chroma_db"           # Alternative parent
+    ]
+    
+    for path in possible_paths:
+        if os.path.exists(path):
+            try:
+                rag = MedicalRAG(chroma_db_path=path)
+                if rag.is_initialized:
+                    logger.info(f"Medical RAG initialized with path: {path}")
+                    return rag
+            except Exception as e:
+                logger.debug(f"Failed to initialize RAG with path {path}: {e}")
+                continue
+    
+    logger.warning("Could not initialize Medical RAG with any path")
+    return None
+
+try:
+    medical_rag = initialize_medical_rag()
+    if medical_rag and medical_rag.is_initialized:
+        logger.info("Medical RAG system loaded successfully")
+        rag_info = medical_rag.get_collection_stats()
+        logger.info(f"RAG Collection Info: {rag_info}")
+    else:
+        logger.warning("Medical RAG system not available")
+        medical_rag = None
+except Exception as e:
+    logger.warning(f"Medical RAG initialization failed: {e}")
+    medical_rag = None
 # def extract_json(response):
 #     """Extracts JSON part from the response."""
 #     # Regular expression to match valid JSON block
@@ -240,6 +301,78 @@ def validate_medical_values(data: str) -> str:
                 validation_results["valid"] = False
 
         # --- Placeholder for Medical Term Validation via RAG ---
+        # --- Medical Term Validation via RAG ---
+        if medical_rag and medical_rag.is_initialized:
+            logger.info("Performing UMLS medical term validation")
+            logger.debug(f"RAG system available: {medical_rag is not None}")
+            logger.debug(f"RAG system initialized: {medical_rag.is_initialized if medical_rag else False}")
+            try:
+                # Extract and validate medical terms using the global RAG instance
+                rag_validation = medical_rag.validate_medical_text(data)
+                
+                # Add this validation:
+                if not isinstance(rag_validation, dict) or 'total_terms' not in rag_validation:
+                    logger.error(f"Invalid RAG validation result: {type(rag_validation)}")
+                    rag_validation = {
+                        "total_terms": 0,
+                        "validated_terms": 0,
+                        "unknown_terms": 0,
+                        "confidence_average": 0.0,
+                        "term_validations": []
+                    }
+                # Add RAG validation results to the main validation
+                validation_results["rag_validation"] = rag_validation
+                validation_results["medical_terms_found"] = rag_validation["total_terms"]
+                validation_results["medical_terms_validated"] = rag_validation["validated_terms"]
+                
+                # Process individual term validations
+                for term_validation in rag_validation["term_validations"]:
+                    if not term_validation["found"]:
+                        # Add unknown terms to RAG candidates
+                        validation_results["rag_candidates"].append({
+                            "term": term_validation['term'],
+                            "suggestions": term_validation['suggestions'],
+                            "confidence": term_validation['confidence'],
+                            "category": term_validation.get('category', 'unknown')
+                        })
+                        
+                        # Add to issues if confidence is very low
+                        if term_validation['confidence'] < 0.3:
+                            issue = f"Unrecognized medical term: '{term_validation['term']}'"
+                            if term_validation.get('suggestions'):
+                                suggestions = ', '.join(term_validation['suggestions'][:2])
+                                issue += f" - Similar terms: {suggestions}"
+                            validation_results["issues"].append(issue)
+                            validation_results["valid"] = False
+                
+                # Add overall validation metrics
+                validation_results["rag_metrics"] = {
+                    "total_terms": rag_validation['total_terms'],
+                    "validated_terms": rag_validation['validated_terms'],
+                    "unknown_terms": rag_validation['unknown_terms'],
+                    "confidence_average": rag_validation['confidence_average'],
+                    "semantic_types": rag_validation.get('semantic_types', [])
+                }
+                
+                # Determine overall validation based on RAG results
+                if rag_validation["unknown_terms"] > rag_validation["validated_terms"]:
+                    validation_results["valid"] = False
+                    validation_results["issues"].append(
+                        f"More unknown medical terms ({rag_validation['unknown_terms']}) than validated ones ({rag_validation['validated_terms']})"
+                    )
+                
+                logger.info(f"RAG Validation Complete: {rag_validation['validated_terms']}/{rag_validation['total_terms']} terms validated")
+                
+            except Exception as rag_error:
+                logger.error(f"RAG validation error: {str(rag_error)}")
+                validation_results["rag_error"] = str(rag_error)
+                validation_results["rag_available"] = False
+        else:
+            logger.warning("UMLS RAG not available, using basic term extraction")
+            validation_results["rag_available"] = False
+        # --- End of RAG Validation ---
+
+
         # You can use regex or a chunker to identify terms to validate
         suspect_terms = re.findall(r"(Diagnosis: .+?)(?:\n|$)", data)
         if suspect_terms:
