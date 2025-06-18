@@ -1,0 +1,31 @@
+2025-06-18 02:05:31,613 - Trial_Notebooks.medical_pdf_processor - INFO - Starting new log session in file: logs/medical_pdf_processor_2025-06-18.log
+2025-06-18 02:05:31,615 - Trial_Notebooks.medical_pdf_processor - INFO - Loaded environment variables from .env
+2025-06-18 02:05:31,615 - Trial_Notebooks.medical_pdf_processor - INFO - LLM initialized successfully
+2025-06-18 02:05:31,616 - Trial_Notebooks.medical_pdf_processor - INFO - Initializing EasyOCR reader for English language...
+2025-06-18 02:05:31,617 - easyocr.easyocr - WARNING - Neither CUDA nor MPS are available - defaulting to CPU. Note: This module is much faster with a GPU.
+2025-06-18 02:05:34,059 - Trial_Notebooks.medical_pdf_processor - INFO - EasyOCR reader initialized successfully
+2025-06-18 02:05:34,062 - Trial_Notebooks.medical_pdf_processor - ERROR - Failed to import Medical RAG: No module named 'medical_rag'
+2025-06-18 02:05:34,062 - Trial_Notebooks.medical_pdf_processor - WARNING - RAG functionality will not be available
+2025-06-18 02:05:34,063 - Trial_Notebooks.medical_pdf_processor - WARNING - Could not initialize Medical RAG with any path
+2025-06-18 02:05:34,063 - Trial_Notebooks.medical_pdf_processor - WARNING - Medical RAG system not available
+2025-06-18 02:05:34,077 - Trial_Notebooks.medical_pdf_processor - INFO - Defining CrewAI agents
+2025-06-18 02:05:34,083 - Trial_Notebooks.medical_pdf_processor - INFO - Defining CrewAI tasks
+2025-06-18 02:05:34,084 - Trial_Notebooks.medical_pdf_processor - INFO - Creating CrewAI crew with agents and tasks
+2025-06-18 02:05:34,321 - Trial_Notebooks.medical_pdf_processor - INFO - Medical PDF Crew created successfully
+2025-06-18 02:07:42,023 - Trial_Notebooks.medical_pdf_processor - INFO - Starting new log session in file: logs/medical_pdf_processor_2025-06-18.log
+2025-06-18 02:07:42,024 - Trial_Notebooks.medical_pdf_processor - INFO - Loaded environment variables from .env
+2025-06-18 02:07:42,025 - Trial_Notebooks.medical_pdf_processor - INFO - LLM initialized successfully
+2025-06-18 02:07:42,025 - Trial_Notebooks.medical_pdf_processor - INFO - Initializing EasyOCR reader for English language...
+2025-06-18 02:07:42,026 - easyocr.easyocr - WARNING - Neither CUDA nor MPS are available - defaulting to CPU. Note: This module is much faster with a GPU.
+2025-06-18 02:07:44,529 - Trial_Notebooks.medical_pdf_processor - INFO - EasyOCR reader initialized successfully
+2025-06-18 02:07:44,530 - Trial_Notebooks.medical_pdf_processor - ERROR - Failed to import Medical RAG: No module named 'medical_rag'
+2025-06-18 02:07:44,531 - Trial_Notebooks.medical_pdf_processor - WARNING - RAG functionality will not be available
+2025-06-18 02:07:44,531 - Trial_Notebooks.medical_pdf_processor - WARNING - Could not initialize Medical RAG with any path
+2025-06-18 02:07:44,531 - Trial_Notebooks.medical_pdf_processor - WARNING - Medical RAG system not available
+2025-06-18 02:07:44,542 - Trial_Notebooks.medical_pdf_processor - INFO - Defining CrewAI agents
+2025-06-18 02:07:44,549 - Trial_Notebooks.medical_pdf_processor - INFO - Defining CrewAI tasks
+2025-06-18 02:07:44,550 - Trial_Notebooks.medical_pdf_processor - INFO - Creating CrewAI crew with agents and tasks
+2025-06-18 02:07:44,561 - Trial_Notebooks.medical_pdf_processor - INFO - Medical PDF Crew created successfully
+2025-06-18 02:07:44,562 - Trial_Notebooks.medical_pdf_processor - INFO - Starting medical data validation
+2025-06-18 02:07:44,563 - Trial_Notebooks.medical_pdf_processor - WARNING - UMLS RAG not available, using basic term extraction
+2025-06-18 02:07:44,563 - Trial_Notebooks.medical_pdf_processor - INFO - Validation complete - No critical issues
