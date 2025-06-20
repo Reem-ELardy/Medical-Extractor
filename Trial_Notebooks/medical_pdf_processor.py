@@ -11,13 +11,22 @@ The main components are:
 1. Text extraction using EasyOCR
 2. Data validation for medical values and terminology
 3. Structured formatting into standardized JSON
-4. Medical recommendations generation
+4. Enhanced medical recommendations with web scraping
 5. User feedback processing
+
+New Features:
+- Real-time treatment guideline scraping from Mayo Clinic and WebMD
+- Intelligent condition extraction for web searching
+- Multi-layer fallback system for reliability
+- Day-long caching for scraped data
+- Source attribution for recommendations
 
 Dependencies:
 - crewai: For agent orchestration
 - easyocr: For OCR text extraction
-- langchain: For LLM interactions
+- requests: For Mayo Clinic scraping
+- playwright: For WebMD scraping
+- beautifulsoup4: For HTML parsing
 - OpenAI API: For GPT-4 capabilities
 """
 
@@ -25,26 +34,31 @@ import os
 import json
 import re
 import logging
-from typing import Dict, Any, Union, List, Optional
+import hashlib
+import time
+import random
+from typing import Dict, Any, Union, List, Optional, Tuple
 import tempfile
 import numpy as np
-from datetime import datetime
-
+from datetime import datetime, timedelta
+from urllib.parse import urljoin, urlparse
+from dataclasses import dataclass
 
 # Third-party imports
 from dotenv import load_dotenv
 from crewai import Agent, Task, Crew, Process, LLM
-# from langchain.tools import tool
-# from langchain_groq import ChatGroq
 import easyocr
 from crewai.tools import tool
 from PIL import Image
+import requests
+from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 import google.generativeai as genai
-# from google import genai
 
 # Ensure the logs directory exists
 os.makedirs('logs', exist_ok=True)
 os.makedirs("extracted", exist_ok=True)
+os.makedirs("cache", exist_ok=True)
 
 # Get current date for the log filename
 current_date = datetime.now().strftime('%Y-%m-%d')
@@ -62,6 +76,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 logger.info(f"Starting new log session in file: {log_filename}")
+
 try:
     from medical_rag import MedicalRAG  # Import from same directory
     logger.info("Medical RAG import successful")
@@ -69,6 +84,7 @@ except ImportError as e:
     logger.error(f"Failed to import Medical RAG: {e}")
     logger.warning("RAG functionality will not be available")
     MedicalRAG = None
+
 # Load environment variables from .env file
 def load_environment():
     """Load environment variables from .env file"""
@@ -93,6 +109,597 @@ def load_environment():
     
     return env_loaded
 
+#############################################################################
+# MAYO CLINIC ENHANCED SCRAPER CLASSES
+#############################################################################
+
+@dataclass
+class MedicalCondition:
+    """Data class to store medical condition information"""
+    name: str
+    source: str
+    url: str
+    diagnosis: str = ""
+    symptoms: List[str] = None
+    treatments: List[str] = None
+    overview: str = ""
+    scraped_at: str = ""
+    
+    def __post_init__(self):
+        if self.symptoms is None:
+            self.symptoms = []
+        if self.treatments is None:
+            self.treatments = []
+        if not self.scraped_at:
+            self.scraped_at = datetime.now().isoformat()
+
+class MayoClinicScraper:
+    """
+    Enhanced scraper for Mayo Clinic website using requests + BeautifulSoup
+    Focuses on diagnosis-treatment pages and h2 Treatment sections with h3 subsections
+    """
+    
+    def __init__(self):
+        self.base_url = "https://www.mayoclinic.org"
+        self.session = requests.Session()
+        
+        # Set realistic headers to avoid blocking
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1'
+        })
+        
+        self.rate_limit_delay = (1, 3)  # Random delay between 1-3 seconds
+        logger.info("Enhanced Mayo Clinic scraper initialized")
+    
+    def _get_page(self, url: str) -> Optional[BeautifulSoup]:
+        """
+        Fetch and parse a web page with rate limiting and error handling
+        """
+        try:
+            # Add random delay to be respectful
+            delay = random.uniform(*self.rate_limit_delay)
+            time.sleep(delay)
+            
+            logger.info(f"Fetching: {url}")
+            response = self.session.get(url, timeout=10)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            logger.debug(f"Successfully parsed page: {url}")
+            return soup
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching {url}: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error parsing {url}: {e}")
+            return None
+    
+    def _check_url_exists(self, url: str) -> bool:
+        """Enhanced URL checking with better error handling and logging"""
+        try:
+            logger.debug(f"Checking URL existence: {url}")
+            response = self.session.head(url, timeout=8, allow_redirects=True)
+            
+            # Accept both 200 and 3xx redirects as valid
+            if response.status_code in [200, 301, 302, 303, 307, 308]:
+                logger.debug(f"✅ URL exists (status {response.status_code}): {url}")
+                return True
+            else:
+                logger.debug(f"❌ URL not found (status {response.status_code}): {url}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            logger.debug(f"⏱️ Timeout checking URL: {url}")
+            return False
+        except requests.exceptions.RequestException as e:
+            logger.debug(f"❌ Error checking URL {url}: {e}")
+            return False
+        except Exception as e:
+            logger.debug(f"❌ Unexpected error checking URL {url}: {e}")
+            return False
+    
+    def search_conditions(self, query: str) -> List[str]:
+        """
+        Generic search for medical conditions on Mayo Clinic
+        Automatically discovers the correct URL structure and finds diagnosis-treatment pages only
+        """
+        search_urls = []
+        
+        # Clean the query for URL formation
+        clean_query = query.lower().replace(' ', '-').replace('_', '-')
+        
+        # Basic URL patterns to try
+        base_patterns = [
+            clean_query,
+            f"chronic-{clean_query}",
+            f"acute-{clean_query}",
+            clean_query.replace('-', ''),
+            clean_query.replace('-', ' ').replace(' ', '')
+        ]
+        
+        logger.info(f"Searching Mayo Clinic for '{query}' using patterns: {base_patterns}")
+        
+        # For each base pattern, try to find the main condition page first
+        for pattern in base_patterns:
+            base_url = f"{self.base_url}/diseases-conditions/{pattern}"
+            
+            # Check if the base condition page exists
+            if self._check_url_exists(base_url):
+                logger.info(f"✅ Found base condition page: {base_url}")
+                
+                # Now find the diagnosis-treatment page specifically
+                condition_urls = self._discover_condition_subpages(base_url, pattern)
+                search_urls.extend(condition_urls)
+                
+                if search_urls:
+                    break  # Found working URLs, no need to try more patterns
+        
+        # If no direct patterns worked, try alternative discovery methods
+        if not search_urls:
+            search_urls = self._alternative_discovery(query)
+        
+        return search_urls
+    
+    def _discover_condition_subpages(self, base_url: str, condition_pattern: str) -> List[str]:
+        """
+        Given a base condition URL, discover only the diagnosis-treatment subpage
+        """
+        subpage_urls = []
+        
+        # Only look for diagnosis-treatment page
+        target_subpage = "diagnosis-treatment"
+        
+        # First, get the base page to find actual subpage links
+        soup = self._get_page(base_url)
+        if soup:
+            # Look for links to diagnosis-treatment page in the navigation or content
+            all_links = soup.find_all('a', href=True)
+            
+            for link in all_links:
+                href = link.get('href')
+                if href:
+                    # Convert relative URLs to absolute
+                    if href.startswith('/'):
+                        full_url = urljoin(self.base_url, href)
+                    elif href.startswith('http'):
+                        full_url = href
+                    else:
+                        continue
+                    
+                    # Check if this link is the diagnosis-treatment page we're looking for
+                    if f"/diseases-conditions/{condition_pattern}/{target_subpage}/" in full_url:
+                        if full_url not in subpage_urls:
+                            subpage_urls.append(full_url)
+                            logger.info(f"✅ Found diagnosis-treatment page via scraping: {full_url}")
+                            break  # Found it, no need to continue
+        
+        # If scraping didn't find the diagnosis-treatment page, try simple pattern
+        if not subpage_urls:
+            test_url = f"{self.base_url}/diseases-conditions/{condition_pattern}/{target_subpage}"
+            if self._check_url_exists(test_url):
+                subpage_urls.append(test_url)
+                logger.info(f"✅ Found diagnosis-treatment page via simple pattern: {test_url}")
+        
+        # Return the diagnosis-treatment page or base URL as fallback
+        return subpage_urls if subpage_urls else ([base_url] if self._check_url_exists(base_url) else [])
+    
+    def _alternative_discovery(self, query: str) -> List[str]:
+        """
+        Alternative discovery method when direct patterns fail
+        """
+        logger.info(f"Attempting alternative discovery for: {query}")
+        
+        # Try to extract key medical terms and search for them
+        words = query.lower().replace('-', ' ').split()
+        
+        # Common medical term transformations
+        transformations = {
+            'deviation': 'deviated',
+            'enlargement': 'enlarged', 
+            'inflammation': 'inflamed',
+            'infection': 'infected'
+        }
+        
+        # Transform words and create new patterns
+        transformed_words = []
+        for word in words:
+            if word in transformations:
+                transformed_words.append(transformations[word])
+            else:
+                transformed_words.append(word)
+        
+        # Try different combinations
+        test_patterns = [
+            '-'.join(transformed_words),
+            '-'.join(words[:2]) if len(words) > 1 else words[0],
+            '-'.join(reversed(words)) if len(words) > 1 else words[0],
+            words[-1] if len(words) > 1 else words[0]  # Try just the last word
+        ]
+        
+        for pattern in test_patterns:
+            base_url = f"{self.base_url}/diseases-conditions/{pattern}"
+            if self._check_url_exists(base_url):
+                return self._discover_condition_subpages(base_url, pattern)
+        
+        return []
+    
+    def extract_condition_info(self, url: str) -> Optional[MedicalCondition]:
+        """
+        Extract comprehensive information about a medical condition
+        Focus on diagnosis-treatment page only
+        """
+        logger.info(f"Processing condition URL: {url}")
+        
+        # If this is a base condition page (no subpage), find the diagnosis-treatment subpage
+        if '/diagnosis-treatment/' not in url:
+            # Extract condition pattern from URL
+            condition_pattern = self._extract_condition_pattern(url)
+            if condition_pattern:
+                logger.info(f"Base page detected, finding diagnosis-treatment subpage for: {condition_pattern}")
+                subpage_urls = self._discover_condition_subpages(url, condition_pattern)
+                
+                if subpage_urls:
+                    # Process the diagnosis-treatment page
+                    for subpage_url in subpage_urls:
+                        if 'diagnosis-treatment' in subpage_url:
+                            return self._extract_from_single_page(subpage_url)
+                    # If no diagnosis-treatment page found, process the first available page
+                    return self._extract_from_single_page(subpage_urls[0])
+        
+        # Single page processing (already on diagnosis-treatment page)
+        return self._extract_from_single_page(url)
+    
+    def _extract_condition_pattern(self, url: str) -> str:
+        """Extract the condition pattern from a Mayo Clinic URL"""
+        try:
+            # Parse URL like: https://www.mayoclinic.org/diseases-conditions/chronic-sinusitis
+            parts = url.split('/diseases-conditions/')
+            if len(parts) > 1:
+                pattern = parts[1].split('/')[0]  # Get first part after diseases-conditions
+                return pattern
+        except:
+            pass
+        return ""
+    
+    def _extract_from_single_page(self, url: str) -> Optional[MedicalCondition]:
+        """Extract information from a single Mayo Clinic page"""
+        soup = self._get_page(url)
+        if not soup:
+            return None
+        
+        try:
+            # Extract condition name
+            condition_name = self._extract_title(soup)
+            if not condition_name:
+                condition_name = "Unknown Condition"
+            
+            # Initialize condition object
+            condition = MedicalCondition(
+                name=condition_name,
+                source="Mayo Clinic",
+                url=url
+            )
+            
+            # Extract overview/description
+            condition.overview = self._extract_overview(soup)
+            
+            # Extract symptoms (minimal for diagnosis-treatment focus)
+            condition.symptoms = self._extract_symptoms(soup)
+            
+            # Extract treatments (enhanced for h2 Treatment sections with h3 subsections)
+            condition.treatments = self._extract_treatments(soup)
+            
+            # Extract diagnosis information
+            condition.diagnosis = self._extract_diagnosis(soup)
+            
+            logger.info(f"Successfully extracted info for: {condition_name}")
+            logger.debug(f"Found {len(condition.symptoms)} symptoms, {len(condition.treatments)} treatments")
+            
+            return condition
+            
+        except Exception as e:
+            logger.error(f"Error extracting condition info from {url}: {e}")
+            return None
+    
+    def _extract_title(self, soup: BeautifulSoup) -> str:
+        """Extract page title from Mayo Clinic page"""
+        title_selectors = [
+            'h1.content-title',
+            'h1[data-page-title]',
+            '.page-header h1',
+            'h1',
+            '.content-title'
+        ]
+        
+        for selector in title_selectors:
+            title_elem = soup.select_one(selector)
+            if title_elem:
+                title = title_elem.get_text().strip()
+                if title:
+                    return title
+        
+        return ""
+    
+    def _extract_overview(self, soup: BeautifulSoup) -> str:
+        """Extract overview/description from Mayo Clinic page"""
+        overview_selectors = [
+            '.content .highlight p',  # Mayo Clinic highlight boxes
+            '.overview-content p:first-of-type',
+            '.content-main p:first-of-type',
+            '.page-content p:first-of-type',
+            'p:first-of-type'
+        ]
+        
+        for selector in overview_selectors:
+            overview_elem = soup.select_one(selector)
+            if overview_elem:
+                text = overview_elem.get_text().strip()
+                if text and len(text) > 50:
+                    return text
+        
+        return ""
+    
+    def _extract_symptoms(self, soup: BeautifulSoup) -> List[str]:
+        """Extract symptoms from Mayo Clinic page (minimal for diagnosis-treatment focus)"""
+        symptoms = []
+        
+        # Basic symptom extraction for diagnosis-treatment pages
+        symptoms_selectors = [
+            '[class*="symptoms" i] ul li',
+            '[id*="symptoms" i] ul li',
+            '.content ul li',
+        ]
+        
+        for selector in symptoms_selectors:
+            try:
+                elements = soup.select(selector)
+                for elem in elements:
+                    symptom = elem.get_text().strip()
+                    if symptom and len(symptom) > 5:
+                        symptoms.append(symptom)
+                
+                if symptoms:
+                    break  # Found symptoms, no need to try other selectors
+            except Exception as e:
+                logger.debug(f"Error with selector {selector}: {e}")
+                continue
+        
+        # Remove duplicates and limit results
+        return list(dict.fromkeys(symptoms))[:10]
+    
+    def _extract_treatments(self, soup: BeautifulSoup) -> List[str]:
+        """Extract treatment information from Mayo Clinic diagnosis-treatment page, focusing on h2 'Treatment' section and all h3 subsections"""
+        treatments = []
+        
+        # First, look specifically for h2 with "Treatment" text
+        treatment_h2 = soup.find('h2', string=re.compile(r'^Treatment$', re.I))
+        
+        if treatment_h2:
+            logger.info("✅ Found h2 'Treatment' section")
+            
+            # Get content following the Treatment h2
+            current = treatment_h2.next_sibling
+            
+            while current:
+                if hasattr(current, 'name'):
+                    # Stop when we hit another h2 (next major section)
+                    if current.name == 'h2':
+                        logger.info(f"Stopped at next h2: {current.get_text().strip()}")
+                        break
+                    
+                    # Process h3 headers (treatment subsections)
+                    elif current.name == 'h3':
+                        h3_text = current.get_text().strip()
+                        logger.info(f"Found h3 treatment subsection: {h3_text}")
+                        
+                        # Add the h3 header as a treatment category
+                        if h3_text and len(h3_text) > 3:
+                            treatments.append(f"**{h3_text}**")
+                        
+                        # Get content following this h3 until next h3 or h2
+                        h3_current = current.next_sibling
+                        while h3_current:
+                            if hasattr(h3_current, 'name'):
+                                if h3_current.name in ['h2', 'h3']:
+                                    break  # Stop at next heading
+                                elif h3_current.name in ['ul', 'ol']:
+                                    # Extract list items under this h3
+                                    items = h3_current.find_all('li')
+                                    for item in items:
+                                        treatment = item.get_text().strip()
+                                        if treatment and len(treatment) > 10:
+                                            treatments.append(f"  • {treatment}")
+                                elif h3_current.name == 'p':
+                                    # Extract paragraph content under this h3
+                                    text = h3_current.get_text().strip()
+                                    if text and len(text) > 20:
+                                        treatments.append(f"  {text}")
+                                elif h3_current.name == 'div':
+                                    # Look inside divs for nested content
+                                    div_lists = h3_current.find_all(['ul', 'ol'])
+                                    for ul in div_lists:
+                                        items = ul.find_all('li')
+                                        for item in items:
+                                            treatment = item.get_text().strip()
+                                            if treatment and len(treatment) > 10:
+                                                treatments.append(f"  • {treatment}")
+                                    
+                                    # Also check paragraphs in the div
+                                    div_paras = h3_current.find_all('p')
+                                    for para in div_paras:
+                                        text = para.get_text().strip()
+                                        if text and len(text) > 20:
+                                            treatments.append(f"  {text}")
+                            
+                            h3_current = h3_current.next_sibling
+                    
+                    # Process direct content under the main h2 (before any h3s)
+                    elif current.name in ['ul', 'ol']:
+                        # Extract list items directly under h2
+                        items = current.find_all('li')
+                        for item in items:
+                            treatment = item.get_text().strip()
+                            if treatment and len(treatment) > 10:
+                                treatments.append(treatment)
+                    elif current.name == 'p':
+                        # Extract paragraph content directly under h2
+                        text = current.get_text().strip()
+                        if text and len(text) > 20:
+                            treatments.append(text)
+                    elif current.name == 'div':
+                        # Look inside divs for nested content directly under h2
+                        div_lists = current.find_all(['ul', 'ol'])
+                        for ul in div_lists:
+                            items = ul.find_all('li')
+                            for item in items:
+                                treatment = item.get_text().strip()
+                                if treatment and len(treatment) > 10:
+                                    treatments.append(treatment)
+                        
+                        # Also check paragraphs in the div
+                        div_paras = current.find_all('p')
+                        for para in div_paras:
+                            text = para.get_text().strip()
+                            if text and len(text) > 20:
+                                treatments.append(text)
+                
+                current = current.next_sibling
+        
+        # If no h2 'Treatment' found, try other treatment headings as fallback
+        if not treatments:
+            logger.info("No h2 'Treatment' found, trying alternative headings")
+            treatment_headings = soup.find_all(['h2', 'h3', 'h4'], 
+                                             string=re.compile(r'treatment|therapy|management|care|medication', re.I))
+            
+            for heading in treatment_headings:
+                logger.info(f"Found treatment heading: {heading.get_text().strip()}")
+                # Get content following the heading
+                current = heading.next_sibling
+                found_items = 0
+                
+                while current and found_items < 10:
+                    if hasattr(current, 'name'):
+                        if current.name in ['ul', 'ol']:
+                            items = current.find_all('li')
+                            for item in items:
+                                treatment = item.get_text().strip()
+                                if treatment and len(treatment) > 10:
+                                    treatments.append(treatment)
+                                    found_items += 1
+                        elif current.name == 'p':
+                            text = current.get_text().strip()
+                            if text and len(text) > 20:
+                                treatments.append(text)
+                                found_items += 1
+                        elif current.name in ['h2', 'h3', 'h4']:
+                            break  # Stop at next heading
+                    
+                    current = current.next_sibling
+                
+                if treatments:
+                    break  # Found treatments, no need to check other headings
+        
+        # If still no treatments found, try enhanced selectors as final fallback
+        if not treatments:
+            logger.info("No treatment headings found, trying enhanced selectors")
+            treatment_selectors = [
+                '[class*="treatment" i] ul li',
+                '[class*="treatment" i] ol li',
+                '[class*="therapy" i] ul li',
+                '[class*="management" i] ul li',
+                '[id*="treatment" i] ul li',
+                '[id*="treatment" i] ol li',
+                '.content ul li',
+                '.page-content ul li', 
+                '.main-content ul li',
+            ]
+            
+            for selector in treatment_selectors:
+                try:
+                    elements = soup.select(selector)
+                    for elem in elements:
+                        treatment = elem.get_text().strip()
+                        if treatment and len(treatment) > 10:
+                            treatments.append(treatment)
+                    
+                    if treatments:
+                        break
+                except Exception as e:
+                    logger.debug(f"Error with treatment selector {selector}: {e}")
+                    continue
+        
+        # Remove duplicates while preserving order and limit results
+        unique_treatments = list(dict.fromkeys(treatments))
+        logger.info(f"Extracted {len(unique_treatments)} treatments (including h3 subsections)")
+        
+        # Log the structure found
+        h3_count = len([t for t in unique_treatments if t.startswith('**')])
+        logger.info(f"Found {h3_count} h3 treatment subsections")
+        
+        return unique_treatments[:25]  # Increased limit to accommodate h3 sections
+    
+    def _extract_diagnosis(self, soup: BeautifulSoup) -> str:
+        """Extract diagnosis information from Mayo Clinic page"""
+        diagnosis_text = ""
+        
+        # Look for diagnosis headings
+        diagnosis_headings = soup.find_all(['h2', 'h3', 'h4'], 
+                                         string=re.compile(r'diagnosis|diagnostic|tests?|testing', re.I))
+        
+        for heading in diagnosis_headings:
+            # Get following content
+            paragraphs = []
+            current = heading.next_sibling
+            
+            while current and len(paragraphs) < 3:
+                if hasattr(current, 'name'):
+                    if current.name == 'p':
+                        text = current.get_text().strip()
+                        if text and len(text) > 20:
+                            paragraphs.append(text)
+                    elif current.name in ['h2', 'h3', 'h4']:
+                        break  # Stop at next heading
+                
+                current = current.next_sibling
+            
+            if paragraphs:
+                diagnosis_text = ' '.join(paragraphs)[:800]  # Limit length
+                break
+        
+        # Alternative: look for diagnosis sections
+        if not diagnosis_text:
+            diagnosis_selectors = [
+                '[class*="diagnosis" i]',
+                '[id*="diagnosis" i]',
+                '[class*="diagnostic" i]',
+                '[class*="testing" i]'
+            ]
+            
+            for selector in diagnosis_selectors:
+                try:
+                    elements = soup.select(selector)
+                    for elem in elements:
+                        text = elem.get_text().strip()
+                        if text and len(text) > 50:
+                            diagnosis_text = text[:800]
+                            break
+                    if diagnosis_text:
+                        break
+                except:
+                    continue
+        
+        return diagnosis_text
+
+#############################################################################
+# ENVIRONMENT AND LLM SETUP
+#############################################################################
+
 # Initialize environment
 env_loaded = load_environment()
 
@@ -104,7 +711,7 @@ def initialize_llm():
         raise ValueError("GEMINI_API_KEY not found in environment variables")
     
     return LLM(
-        model='gemini/gemini-1.5-flash',
+        model='gemini/gemini-2.0-flash',
         provider="google",
         api_key=api_key,
         temperature=0
@@ -127,14 +734,6 @@ except Exception as e:
     logger.error(f"Failed to initialize EasyOCR: {e}")
     raise
 
-# Validate critical imports
-try:
-    from medical_rag import MedicalRAG
-    logger.info("Medical RAG import successful")
-except ImportError as e:
-    logger.error(f"Failed to import Medical RAG: {e}")
-    logger.warning("RAG functionality will not be available")
-    MedicalRAG = None
 # Initialize Medical RAG system with proper path handling
 def initialize_medical_rag():
     """Initialize Medical RAG system with robust path handling"""
@@ -171,22 +770,65 @@ try:
 except Exception as e:
     logger.warning(f"Medical RAG initialization failed: {e}")
     medical_rag = None
-# def extract_json(response):
-#     """Extracts JSON part from the response."""
-#     # Regular expression to match valid JSON block
-#     json_match = re.search(r'\{.*\}', response, re.DOTALL)
+
+# Initialize enhanced Mayo Clinic scraper
+try:
+    mayo_scraper = MayoClinicScraper()
+    logger.info("Enhanced Mayo Clinic scraper initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize Mayo Clinic scraper: {e}")
+    mayo_scraper = None
     
-#     if json_match:
-#         try:
-#             # Parse the matched JSON string
-#             structured_output = json.loads(json_match.group(0))
-#             return structured_output
-#         except json.JSONDecodeError as e:
-#             print(f"Error decoding JSON: {e}")
-#             return None
-#     else:
-#         print("No valid JSON found in the response.")
-#         return None
+#############################################################################
+# CACHING UTILITIES
+#############################################################################
+
+def get_cache_key(condition: str, source: str) -> str:
+    """Generate a cache key for a condition and source"""
+    cache_string = f"{condition}_{source}".lower()
+    return hashlib.md5(cache_string.encode()).hexdigest()
+
+def get_cached_data(condition: str, source: str) -> Optional[str]:
+    """Retrieve cached data if it exists and is not expired (24 hours)"""
+    cache_key = get_cache_key(condition, source)
+    cache_file = f"cache/{cache_key}.json"
+    
+    if os.path.exists(cache_file):
+        try:
+            with open(cache_file, 'r') as f:
+                cache_data = json.load(f)
+            
+            # Check if cache is expired (24 hours = 86400 seconds)
+            cache_time = datetime.fromisoformat(cache_data['timestamp'])
+            if (datetime.now() - cache_time).total_seconds() < 86400:
+                logger.info(f"Using cached data for {condition} from {source}")
+                return cache_data['data']
+            else:
+                logger.info(f"Cache expired for {condition} from {source}")
+                os.remove(cache_file)
+        except Exception as e:
+            logger.error(f"Error reading cache: {e}")
+    
+    return None
+
+def cache_data(condition: str, source: str, data: str):
+    """Cache data with timestamp for 24-hour expiry"""
+    cache_key = get_cache_key(condition, source)
+    cache_file = f"cache/{cache_key}.json"
+    
+    cache_content = {
+        'condition': condition,
+        'source': source,
+        'data': data,
+        'timestamp': datetime.now().isoformat()
+    }
+    
+    try:
+        with open(cache_file, 'w') as f:
+            json.dump(cache_content, f)
+        logger.info(f"Cached data for {condition} from {source}")
+    except Exception as e:
+        logger.error(f"Error caching data: {e}")
 
 #############################################################################
 # TOOL DEFINITIONS
@@ -215,10 +857,6 @@ def extract_text_from_image(image_path: str) -> str:
             logger.error(f"Image file not found: {image_path}")
             raise FileNotFoundError(f"[Errno 2] No such file or directory: '{image_path}'")
 
-        # Load the image
-        # img = Image.open(image_path)
-        # img_np = np.array(img)
-        
         # Use EasyOCR to extract text
         results = reader.readtext(image_path)
         logger.debug(f"Found {len(results)} text blocks in the image")
@@ -300,7 +938,6 @@ def validate_medical_values(data: str) -> str:
                 validation_results["issues"].append(issue)
                 validation_results["valid"] = False
 
-        # --- Placeholder for Medical Term Validation via RAG ---
         # --- Medical Term Validation via RAG ---
         if medical_rag and medical_rag.is_initialized:
             logger.info("Performing UMLS medical term validation")
@@ -370,8 +1007,6 @@ def validate_medical_values(data: str) -> str:
         else:
             logger.warning("UMLS RAG not available, using basic term extraction")
             validation_results["rag_available"] = False
-        # --- End of RAG Validation ---
-
 
         # You can use regex or a chunker to identify terms to validate
         suspect_terms = re.findall(r"(Diagnosis: .+?)(?:\n|$)", data)
@@ -483,7 +1118,6 @@ def format_to_json(extracted_text: str) -> str:
     try:
         # Use the LLM to structure the data
         logger.debug("Sending text to LLM for structuring")
-        # response = llm.invoke(prompt)
         response = llm.call(prompt) 
         logger.debug("Received response from LLM")
         
@@ -622,122 +1256,502 @@ def process_user_feedback(structured_data: str, user_feedback: str, extracted_te
         return json.dumps(data, indent=2)
 
 @tool
-def generate_medical_recommendations(structured_data: Union[str, dict]) -> str:
+def extract_searchable_conditions(medical_problem: str) -> str:
     """
-    Generate patient-friendly recommendations based on the structured medical data.
+    Extract searchable medical conditions from complex medical text using a generalizable prompt.
+    
+    Args:
+        medical_problem (str): Raw medical report text
+    
+    Returns:
+        str: JSON array of simplified, web-searchable medical condition terms (e.g., Mayo Clinic style)
+    """
+    logger.info("Extracting searchable conditions from medical report")
+
+    prompt = f"""
+    You are a medical domain expert trained to convert complex clinical findings into
+    simplified, patient-friendly terms that users can easily search online (like on Mayo Clinic or WebMD).
+
+    INPUT MEDICAL REPORT:
+    "{medical_problem}"
+
+    TASK:
+    - Extract only key medical conditions, diagnoses, or significant findings
+    - Convert them into layperson-friendly, web-searchable terms that would match the names of diseases or conditions as found on websites like Mayo Clinic or MedlinePlus
+    - Avoid technical modifiers (e.g. anatomical locations, severity unless critical)
+    - Avoid repetition or rare synonyms
+    - Output max 5 key conditions
+
+    OUTPUT:
+    Return only a JSON array of simplified medical condition terms.
+
+    Example:
+    INPUT: "Maxillo-ethmoidal and frontal sinusitis, Nasal septum deviation, Hypertrophied inferior nasal turbinates, Allergic rhinitis"
+    OUTPUT: ["Chronic sinusitis", "Deviated septum", "Nasal polyps", "Hay fever"]
+    """
+
+    try:
+        logger.debug("Sending prompt to LLM...")
+        response = llm.call(prompt)
+        logger.debug(f"Received response: {response}")
+        return response  # Already in JSON format
+    except Exception as e:
+        logger.error(f"Error extracting searchable conditions: {e}")
+        return json.dumps([])
+
+@tool
+def scrape_mayo_treatments(conditions: List[str]) -> str:
+    """
+    Enhanced Mayo Clinic scraper using the integrated MayoClinicScraper class.
+    Scrapes treatment information from Mayo Clinic for given medical conditions.
+    
+    Args:
+        conditions (List[str]): List of medical conditions to search for treatments
+    
+    Returns:
+        str: JSON string with enhanced treatment information from Mayo Clinic
+    """
+    logger.info(f"Starting enhanced Mayo Clinic scraping for conditions: {conditions}")
+    
+    if isinstance(conditions, str):
+        try:
+            conditions = json.loads(conditions)
+        except json.JSONDecodeError:
+            conditions = [conditions]
+    
+    if not mayo_scraper:
+        logger.error("Mayo Clinic scraper not initialized")
+        return json.dumps({"error": "Mayo Clinic scraper not available"})
+    
+    treatment_data = {}
+    
+    for condition in conditions:
+        if not condition or not condition.strip():
+            continue
+            
+        condition = condition.strip()
+        logger.info(f"Processing condition: {condition}")
+        
+        # Check cache first
+        cached_result = get_cached_data(condition, "mayo_enhanced")
+        if cached_result:
+            treatment_data[condition] = cached_result
+            continue
+        
+        try:
+            # Use the enhanced Mayo Clinic scraper
+            logger.info(f"Searching Mayo Clinic for: {condition}")
+            condition_urls = mayo_scraper.search_conditions(condition)
+            
+            if condition_urls:
+                logger.info(f"Found {len(condition_urls)} URLs for {condition}")
+                
+                # Process the first (best) URL
+                condition_info = mayo_scraper.extract_condition_info(condition_urls[0])
+                
+                if condition_info and condition_info.treatments:
+                    # Format the enhanced treatment data
+                    enhanced_treatment = {
+                        "condition_name": condition_info.name,
+                        "url": condition_info.url,
+                        "source": "Mayo Clinic Enhanced",
+                        "overview": condition_info.overview,
+                        "treatments": condition_info.treatments,
+                        "diagnosis": condition_info.diagnosis,
+                        "symptoms": condition_info.symptoms[:5],  # Limit symptoms
+                        "scraped_at": condition_info.scraped_at,
+                        "treatment_sections": len([t for t in condition_info.treatments if t.startswith('**')]),
+                        "total_treatments": len(condition_info.treatments)
+                    }
+                    
+                    # Convert to text format for compatibility
+                    treatment_text = f"Condition: {condition_info.name}\n"
+                    if condition_info.overview:
+                        treatment_text += f"Overview: {condition_info.overview}\n\n"
+                    
+                    treatment_text += "TREATMENTS:\n"
+                    for treatment in condition_info.treatments:
+                        treatment_text += f"{treatment}\n"
+                    
+                    if condition_info.diagnosis:
+                        treatment_text += f"\nDIAGNOSIS:\n{condition_info.diagnosis}\n"
+                    
+                    treatment_data[condition] = treatment_text
+                    cache_data(condition, "mayo_enhanced", treatment_text)
+                    
+                    logger.info(f"Successfully scraped enhanced Mayo treatment for {condition}")
+                    logger.info(f"Found {enhanced_treatment['treatment_sections']} treatment sections with {enhanced_treatment['total_treatments']} total treatments")
+                else:
+                    logger.warning(f"No treatment content found for {condition} on Mayo Clinic")
+                    treatment_data[condition] = "No treatment information found"
+            else:
+                logger.info(f"Mayo Clinic page not found for {condition}")
+                treatment_data[condition] = "Condition page not found"
+        
+        except Exception as e:
+            logger.error(f"Error scraping Mayo Clinic for {condition}: {str(e)}", exc_info=True)
+            treatment_data[condition] = f"Scraping error: {str(e)}"
+        
+        # Add delay between requests to be respectful
+        time.sleep(2)
+    
+    successful_results = len([v for v in treatment_data.values() if 'error' not in v.lower() and 'not found' not in v.lower()])
+    logger.info(f"Enhanced Mayo Clinic scraping completed. Retrieved {successful_results} successful results")
+    
+    return json.dumps(treatment_data, indent=2)
+
+@tool
+def scrape_medlineplus_treatments(conditions: List[str]) -> str:
+    """
+    Scrape treatment information from MedlinePlus for given medical conditions.
 
     Args:
-        structured_data (Dict[str, Any]): Structured medical data as a Python dictionary
+        conditions (List[str]): List of condition names to search for.
+
+    Returns:
+        str: JSON string with treatment information.
+    """
+    results = {}
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+
+    
+    def clean_condition_for_url(condition: str) -> str:
+        # Remove anything in parentheses and extra characters
+        condition = re.sub(r"\(.*?\)", "", condition)  # remove (UTI) or similar
+        condition = condition.lower()
+        condition = condition.replace("'", "").replace("'", "").replace("–", "").replace("-", "")
+        condition = condition.replace(" ", "")
+        return condition.strip()
+
+    for condition in conditions:
+        try:
+            time.sleep(1)
+            slug = clean_condition_for_url(condition)
+            url = f"https://medlineplus.gov/{slug}.html"
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code != 200:
+                fallback = url.replace(".html", "s.html")
+                resp = requests.get(fallback, headers=headers, timeout=10)
+                url = fallback if resp.status_code == 200 else url
+                if resp.status_code != 200:
+                    results[condition] = {"error": f"No page found at {url}"}
+                    continue
+
+            soup = BeautifulSoup(resp.content, 'html.parser')
+            treatment_text = ""
+
+            # Step 1: Look for treatment-related headings and paragraphs after them
+            headers_list = soup.find_all(["h2", "h3"])
+            for header in headers_list:
+                header_text = header.get_text(strip=True).lower()
+                if any(kw in header_text for kw in ["summary","treat", "manage", "care", "therapy", "medicine"]):
+                    content = []
+                    for sibling in header.find_next_siblings():
+                        if sibling.name in ["p", "ul", "ol", "li"]:
+                            content.append(sibling.get_text(strip=True))
+                        elif sibling.name in ["h2", "h3"]:
+                            break
+                    if content:
+                        treatment_text = " ".join(content)
+                        break
+
+            # Step 2: Enhanced fallback – look in summary section and early content
+            if not treatment_text:
+                # Try different summary approaches
+                summary_found = False
+                
+                # Approach 1: Look for summary headers
+                for header in headers_list:
+                    header_text = header.get_text(strip=True).lower()
+                    if any(kw in header_text for kw in ["summary", "overview", "about", "what is"]):
+                        summary_parts = []
+                        for sibling in header.find_next_siblings():
+                            if sibling.name in ["p", "ul", "ol", "li"]:
+                                summary_parts.append(sibling.get_text(strip=True))
+                            elif sibling.name in ["h2", "h3"]:
+                                break
+                        if summary_parts:
+                            summary_text = " ".join(summary_parts)
+                            # Look for treatment keywords with more flexibility
+                            treatment_keywords = ['treat', 'treatment', 'therapy', 'medicine', 'medication', 'manage', 'care']
+                            if any(keyword in summary_text.lower() for keyword in treatment_keywords):
+                                treatment_text = summary_text[:3000]
+                                summary_found = True
+                                break
+                
+                # Approach 2: If no summary header found, check first few paragraphs
+                if not summary_found:
+                    main_content = soup.find('main') or soup.find('div', class_='content') or soup
+                    first_paragraphs = main_content.find_all('p')[:4]  # First 4 paragraphs
+                    
+                    for p in first_paragraphs:
+                        p_text = p.get_text(strip=True)
+                        if len(p_text) > 100:  # Skip very short paragraphs
+                            treatment_keywords = ['treat', 'treatment', 'therapy', 'medicine', 'medication', 'manage']
+                            if any(keyword in p_text.lower() for keyword in treatment_keywords):
+                                treatment_text = p_text
+                                break
+                
+                # Approach 3: Look for any paragraph with treatment content
+                if not treatment_text:
+                    all_paragraphs = soup.find_all('p')[:10]  # Check first 10 paragraphs
+                    for p in all_paragraphs:
+                        p_text = p.get_text(strip=True)
+                        if len(p_text) > 80 and 'treat' in p_text.lower():
+                            treatment_text = p_text
+                            break
+
+            # Step 3: Store result
+            if treatment_text:
+                results[condition] = {
+                    "name": condition,
+                    "url": url,
+                    "source": "MedlinePlus",
+                    "treatment": treatment_text.strip()
+                }
+            else:
+                results[condition] = {"error": "No treatment info found"}
+
+        except Exception as e:
+            logging.exception(f"Error scraping {condition}")
+            results[condition] = {"error": str(e)}
+
+    return json.dumps(results, indent=2)
+
+@tool
+def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = "", webmd_data: str = "") -> str:
+    """
+    Generate enhanced medical recommendations combining patient data with scraped treatment guidelines.
+    
+    Args:
+        patient_data (str): Patient's structured medical data
+        mayo_data (str): Treatment data scraped from Mayo Clinic
+        webmd_data (str): Treatment data scraped from WebMD
         
     Returns:
-        str: JSON string with patient-friendly recommendations
+        str: JSON string with enhanced recommendations including source attribution
     """
-    logger.info("Generating medical recommendations based on structured data")
+    logger.info("Generating web-enhanced medical recommendations")
     
-    # Parse the structured data if it's a string
-    if isinstance(structured_data, str):
-        try:
-            data = json.loads(structured_data)
-            logger.debug("Successfully parsed structured data from JSON string")
-        except json.JSONDecodeError as e:
-            logger.error(f"Could not parse the structured data: {e}", exc_info=True)
-            return json.dumps({"error": "Could not parse the structured data"})
-    else:
-        data = structured_data
-        logger.debug("Using provided structured data object")
+    # Parse inputs
+    try:
+        if isinstance(patient_data, str):
+            patient_info = json.loads(patient_data)
+        else:
+            patient_info = patient_data
+    except json.JSONDecodeError:
+        logger.error("Could not parse patient data")
+        return json.dumps({"error": "Could not parse patient data"})
     
-    logger.debug(f"Received data: {data}")
-
-    # Create a prompt for the LLM to generate recommendations
+    try:
+        mayo_treatments = json.loads(mayo_data) if mayo_data else {}
+    except json.JSONDecodeError:
+        mayo_treatments = {}
+    
+    try:
+        webmd_treatments = json.loads(webmd_data) if webmd_data else {}
+    except json.JSONDecodeError:
+        webmd_treatments = {}
+    
+    logger.debug(f"Processing patient: {patient_info.get('Patient Information', 'Unknown')}")
+    logger.debug(f"Mayo treatments available: {len(mayo_treatments)}")
+    logger.debug(f"WebMD treatments available: {len(webmd_treatments)}")
+    
+    # Create enhanced prompt with web data
     prompt = f"""
-    You are a clinically responsible AI medical assistant specializing in generating patient-friendly and medically safe recommendations based strictly on real medical reports.
+    You are a clinically responsible AI medical advisor with access to the latest treatment guidelines. Generate evidence-based, patient-friendly recommendations.
 
-You are provided with:
-- Patient Information: {data.get('Patient Information', 'Unknown')}
-- Medical Problem (technical description): {data.get('Medical Problem', 'Unknown')}
-- Simplified Explanation (patient-friendly summary): {data.get('Simplified Explanation', 'Unknown')}
+    PATIENT INFORMATION:
+    {json.dumps(patient_info, indent=2)}
 
-Your primary goal:
-✅ Generate highly accurate, practical, actionable, and safe recommendations tailored to this specific medical case.
-✅ Base your recommendations ONLY on the provided medical data. Do not add assumptions or external diagnoses.
-✅ Follow general medical best-practices, preventive care, and patient education principles.
+    CURRENT MAYO CLINIC TREATMENT GUIDELINES:
+    {json.dumps(mayo_treatments, indent=2)}
 
-**Rules:**
-- Never introduce any unverified diagnosis, medication, or treatment unless clearly mentioned in the input.
-- Always stay within non-invasive, patient-empowering advice.
-- Respect medical boundaries — your role is to support, not replace, clinical decision-making.
-- Language must be empathetic, simple, and reassuring.
-- Avoid complex medical jargon unless necessary; target 9th-grade reading level.
+    CURRENT WEBMD TREATMENT PROTOCOLS:
+    {json.dumps(webmd_treatments, indent=2)}
 
-**Domains to cover (if applicable to the patient's case):**
-- Medication adherence & importance of following prescriptions (only if medication is mentioned)
-- Monitoring warning signs & when to contact a doctor
-- Scheduling necessary follow-up appointments
-- Lifestyle & diet adjustments related to the condition
-- Mental health and emotional well-being
-- Preventive care & education on condition management
+    INSTRUCTIONS:
+    Generate 3-5 comprehensive recommendations that:
 
-**For each recommendation output:**
-- recommendation: (the clear action the patient should take)
-- explanation: (why this action helps based on the patient's situation)
-- lifestyle_modifications: (specific easy-to-apply daily-life tips to support better outcomes)
+    1. **INTEGRATE CURRENT GUIDELINES**: Use the latest treatment information from Mayo Clinic and WebMD to ensure recommendations are current and evidence-based.
 
+    2. **PERSONALIZE FOR PATIENT**: Tailor recommendations specifically to this patient's conditions and circumstances.
 
-Generate between 3 to 5 recommendations.
+    3. **PRIORITIZE SAFETY**: Focus on safe, non-invasive recommendations that complement professional medical care.
 
-Output strictly in this JSON format:
+    4. **PROVIDE SOURCE ATTRIBUTION**: Clearly indicate when recommendations are based on current medical guidelines vs. general medical knowledge.
 
-{{
-  "recommendations": [
+    5. **ENSURE ACTIONABILITY**: Each recommendation should be specific and actionable for the patient.
+
+    For each recommendation, provide:
+    - **recommendation**: Clear, specific action the patient should take
+    - **explanation**: Why this is important based on their condition and current medical guidelines
+    - **lifestyle_modifications**: Practical daily life tips to support the recommendation
+    - **source**: Whether based on "Mayo Clinic Guidelines", "WebMD Protocols", "Combined Guidelines", or "General Medical Knowledge"
+
+    FOCUS AREAS (if applicable):
+    - Medication adherence and management
+    - Lifestyle modifications for condition management
+    - When to seek immediate medical attention
+    - Preventive care and monitoring
+    - Patient education and self-management
+
+    TARGET AUDIENCE: Patient and family members (9th-grade reading level)
+
+    OUTPUT FORMAT:
     {{
-      "recommendation": "...",
-      "explanation": "..."
-      "lifestyle_modifications": "..."
-    }},
-    ...
-  ]
-}}
-    
-    Format the recommendations as a JSON array of objects with "recommendation" and "explanation" fields.
+        "recommendations": [
+            {{
+                "recommendation": "specific actionable advice",
+                "explanation": "why this helps based on current guidelines and patient condition",
+                "lifestyle_modifications": "practical daily tips",
+                "source": "Mayo Clinic Guidelines / WebMD Protocols / Combined Guidelines / General Medical Knowledge"
+            }}
+        ],
+        "data_source": "web_enhanced",
+        "sources_used": ["Mayo Clinic", "WebMD"],
+        "disclaimer": "These recommendations are based on current medical guidelines but should not replace professional medical advice."
+    }}
     """
     
     try:
-        # Use the LLM to generate recommendations
-        logger.debug("Sending request to LLM for recommendations")
-        # response = llm.invoke(prompt)
-        response = llm.call(prompt) 
-        logger.debug("Received response from LLM")
+        logger.debug("Sending enhanced prompt to LLM")
+        response = llm.call(prompt)
+        logger.debug("Received enhanced recommendations from LLM")
         
-        # Extract recommendations from the response
-        logger.debug("Attempting to extract JSON from LLM response")
-        json_match = re.search(r'({.*}|\[.*\])', response, re.DOTALL)
+        # Extract JSON from response
+        json_match = re.search(r'({.*})', response, re.DOTALL)
         if json_match:
-            json_str = json_match.group(0)
-            # Parse and format the recommendations
+            json_str = json_match.group(1)
             recommendations = json.loads(json_str)
             
-            # Structure as a recommendations object if it's a plain array
-            if isinstance(recommendations, list):
-                recommendations = {"recommendations": recommendations}
-                logger.debug("Wrapped recommendations array in object")
-
-            logger.info(f"Successfully generated {len(recommendations.get('recommendations', []))} recommendations")
+            # Add metadata about sources used
+            sources_used = []
+            if mayo_treatments:
+                sources_used.append("Mayo Clinic")
+            if webmd_treatments:
+                sources_used.append("WebMD")
+            
+            recommendations["sources_used"] = sources_used
+            recommendations["data_source"] = "web_enhanced"
+            recommendations["fallback_used"] = False
+            
+            logger.info(f"Successfully generated {len(recommendations.get('recommendations', []))} web-enhanced recommendations")
             return json.dumps(recommendations, indent=2)
         else:
-            logger.warning("No JSON pattern found in LLM response for recommendations")
-            # If no JSON pattern found, return a default response
-            default_recs = {"recommendations": [
-                {"recommendation": "Please consult with your doctor for personalized advice", 
-                 "explanation": "We couldn't generate specific recommendations based on the available information."}
-            ]}
-
-            logger.info("Returning default recommendations due to parsing failure")
-            return json.dumps(default_recs)
+            logger.warning("No JSON found in enhanced recommendations response")
+            return json.dumps({
+                "error": "Could not parse enhanced recommendations",
+                "fallback_used": True
+            })
     
     except Exception as e:
-        logger.error(f"Error generating recommendations: {str(e)}", exc_info=True)
-        return json.dumps({"error": f"Failed to generate recommendations: {str(e)}"})
+        logger.error(f"Error generating web-enhanced recommendations: {str(e)}", exc_info=True)
+        return json.dumps({
+            "error": f"Failed to generate enhanced recommendations: {str(e)}",
+            "fallback_used": True
+        })
 
+@tool
+def generate_fallback_recommendations(patient_data: str) -> str:
+    """
+    Generate standard LLM recommendations when web scraping fails.
+    
+    Args:
+        patient_data (str): Patient's structured medical data
+        
+    Returns:
+        str: JSON string with standard recommendations and fallback indication
+    """
+    logger.info("Generating fallback recommendations (LLM-only)")
+    
+    try:
+        if isinstance(patient_data, str):
+            patient_info = json.dumps(patient_data)
+        else:
+            patient_info = patient_data
+    except json.JSONDecodeError:
+        logger.error("Could not parse patient data for fallback")
+        return json.dumps({"error": "Could not parse patient data"})
+    
+    prompt = f"""
+    You are a clinically responsible AI medical advisor. Generate safe, evidence-based recommendations for this patient.
+
+    PATIENT INFORMATION:
+    {json.dumps(patient_info, indent=2)}
+
+    NOTE: Current web-based treatment guidelines are not available, so base recommendations on established medical knowledge.
+
+    INSTRUCTIONS:
+    Generate 3-5 comprehensive recommendations that:
+    1. Focus on safe, general medical advice
+    2. Emphasize the importance of professional medical consultation
+    3. Provide practical lifestyle and management tips
+    4. Include when to seek immediate medical attention
+
+    For each recommendation:
+    - **recommendation**: Clear, specific action
+    - **explanation**: Why this is important for their condition
+    - **lifestyle_modifications**: Practical daily tips
+
+    OUTPUT FORMAT:
+    {{
+        "recommendations": [
+            {{
+                "recommendation": "specific actionable advice",
+                "explanation": "why this helps based on medical knowledge",
+                "lifestyle_modifications": "practical daily tips"
+            }}
+        ],
+        "data_source": "llm_fallback",
+        "disclaimer": "These recommendations are based on general medical knowledge. Current treatment guidelines were not available. Please consult your healthcare provider for the most up-to-date treatment options."
+    }}
+    """
+    
+    try:
+        logger.debug("Sending fallback prompt to LLM")
+        response = llm.call(prompt)
+        logger.debug("Received fallback recommendations from LLM")
+        
+        json_match = re.search(r'({.*})', response, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(1)
+            recommendations = json.loads(json_str)
+            recommendations["fallback_used"] = True
+            recommendations["data_source"] = "llm_fallback"
+            
+            logger.info(f"Successfully generated {len(recommendations.get('recommendations', []))} fallback recommendations")
+            return json.dumps(recommendations, indent=2)
+        else:
+            logger.error("Could not parse fallback recommendations")
+            return json.dumps({
+                "recommendations": [
+                    {
+                        "recommendation": "Consult with your healthcare provider for personalized treatment advice",
+                        "explanation": "Professional medical evaluation is essential for proper diagnosis and treatment planning",
+                        "lifestyle_modifications": "Follow any existing treatment plans and maintain regular medical appointments"
+                    }
+                ],
+                "data_source": "emergency_fallback",
+                "fallback_used": True,
+                "disclaimer": "Automated recommendation generation failed. Please seek professional medical advice."
+            })
+    
+    except Exception as e:
+        logger.error(f"Error generating fallback recommendations: {str(e)}", exc_info=True)
+        return json.dumps({
+            "recommendations": [
+                {
+                    "recommendation": "Please consult with your healthcare provider",
+                    "explanation": "Unable to generate automated recommendations due to technical issues",
+                    "lifestyle_modifications": "Continue any existing treatment and seek professional medical guidance"
+                }
+            ],
+            "error": str(e),
+            "data_source": "error_fallback",
+            "fallback_used": True
+        })
+        
 #############################################################################
 # AGENT DEFINITIONS
 #############################################################################
@@ -758,7 +1772,6 @@ validation_agent = Agent(
     llm=llm
 )
 logger.debug("Validation Agent defined")
-print("here")
 
 # Formatting Agent - Responsible for structuring data into standardized formats
 formatting_agent = Agent(
@@ -775,20 +1788,27 @@ formatting_agent = Agent(
 )
 logger.debug("Formatting Agent defined")
 
-# Doctor Agent - Responsible for medical recommendations
-doctor_agent = Agent(
-    role="Medical Advisor",
-    goal="Provide patient-friendly interpretations and recommendations based on medical data",
-    backstory="""You are a licensed physician with excellent communication skills and a 
-    talent for explaining complex medical concepts in simple terms. Your role is to review 
-    structured medical data and generate helpful, actionable advice that patients can 
-    understand and follow. You focus on translating medical jargon into practical guidance.""",
+# Enhanced Doctor Agent - NEW with web scraping capabilities
+enhanced_doctor_agent = Agent(
+    role="AI-Enhanced Medical Advisor with Real-Time Research",
+    goal="Provide current, evidence-based recommendations using patient data and latest treatment guidelines from reputable medical sources",
+    backstory="""You are an advanced medical advisor who combines patient-specific data 
+    with the latest treatment guidelines from reputable medical sources like Mayo Clinic and WebMD. 
+    You excel at synthesizing current medical knowledge with real-time treatment protocols to provide 
+    the most up-to-date, evidence-based recommendations. You always prioritize patient safety and 
+    clearly attribute your sources.""",
     verbose=True,
     allow_delegation=False,
-    tools=[generate_medical_recommendations],
+    tools=[
+        extract_searchable_conditions,
+        scrape_mayo_treatments,
+        scrape_medlineplus_treatments,
+        generate_web_enhanced_recommendations,
+        generate_fallback_recommendations
+    ],
     llm=llm
 )
-logger.debug("Doctor Agent defined")
+logger.debug("Enhanced Doctor Agent defined")
 
 #############################################################################
 # TASK DEFINITIONS
@@ -892,24 +1912,41 @@ feedback_task = Task(
 logger.debug("Feedback Task defined")
 
 # Task 5: Generate recommendations based on the structured data
-recommendation_task = Task(
+enhanced_recommendation_task = Task(
     description="""
-    Based on the structured medical data, provide patient-friendly interpretations and
-    actionable recommendations. Your output should:
-    
-    1. Explain medical terms in simple language
-    2. Highlight key findings from the report
-    3. Provide practical advice based on the diagnoses and lab results
-    4. Suggest lifestyle modifications if appropriate
-    
+    Generate comprehensive, up-to-date medical recommendations using a multi-step process:
+
+    1. **EXTRACT CONDITIONS**: From the structured medical data, identify specific searchable medical conditions
+    2. **RESEARCH TREATMENTS**: Scrape current treatment guidelines from Mayo Clinic and WebMD for each condition
+    3. **ANALYZE & COMBINE**: Integrate web research with patient-specific data using LLM analysis
+    4. **GENERATE RECOMMENDATIONS**: Create evidence-based, current recommendations with source attribution
+    5. **FALLBACK HANDLING**: If web research fails, use LLM knowledge with clear indication
+
     Input: {structured_data}
-    Output: JSON with patient-friendly recommendations
     
-    Focus on being helpful, clear, and encouraging in your recommendations.
+    Process Flow:
+    - Extract searchable conditions from medical problems
+    - Attempt Mayo Clinic scraping (primary source)
+    - Attempt WebMD scraping (secondary source)  
+    - Generate enhanced recommendations if web data available
+    - Use LLM fallback if scraping fails completely
+
+    Focus on:
+    - Current treatment protocols and guidelines
+    - Patient-specific actionable advice
+    - Safety and evidence-based recommendations
+    - Clear source attribution
+    - Practical lifestyle modifications
     """,
-    expected_output="Patient-friendly recommendations and explanations",
-    agent=doctor_agent,
-    tools=[generate_medical_recommendations],
+    expected_output="Enhanced recommendations with current medical guidelines, source attribution, and fallback handling",
+    agent=enhanced_doctor_agent,
+    tools=[
+        extract_searchable_conditions,
+        scrape_mayo_treatments, 
+        scrape_medlineplus_treatments,
+        generate_web_enhanced_recommendations,
+        generate_fallback_recommendations
+    ],
     async_execution=False,
     context=[feedback_task]
 )
@@ -927,7 +1964,6 @@ medical_image_crew = Crew(
     tasks=[extraction_task, validation_task, formatting_task],
     verbose=True,
     process=Process.sequential,
-    # memory=True,
     cache=True
 )
 logger.info("Medical PDF Crew created successfully")
@@ -1036,50 +2072,48 @@ def process_feedback(structured_data: Dict[str, Any], user_feedback: str) -> Dic
 
 def generate_recommendations(structured_data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Generate medical recommendations based on structured data
+    Generate enhanced medical recommendations with web scraping
     
     Args:
         structured_data (dict): The verified structured data
         
     Returns:
-        dict: Medical recommendations
+        dict: Enhanced medical recommendations with source attribution
         
     Raises:
         Exception: If there is an error during recommendation generation
     """
-    logger.info("Generating recommendations as a separate operation")
+    logger.info("Generating enhanced recommendations with web scraping")
     
     try:
-        # Create a mini-crew for generating recommendations
         recommendation_crew = Crew(
-            agents=[doctor_agent],
-            tasks=[recommendation_task],
+            agents=[enhanced_doctor_agent],
+            tasks=[enhanced_recommendation_task],
             verbose=True,
             process=Process.sequential
         )
-        logger.debug("Recommendation crew created")
+        logger.debug("Enhanced recommendation crew created")
         
-        # Run the crew
         result = recommendation_crew.kickoff(
             inputs={"structured_data": json.dumps(structured_data)}
         )
-        logger.debug("Recommendation crew completed processing")
+        logger.debug("Enhanced recommendation crew completed processing")
         
-        # Format the result
         if isinstance(result, str):
             try:
                 result = json.loads(result)
                 logger.debug("Successfully parsed JSON result from string")
             except json.JSONDecodeError:
-                logger.warning("Could not parse recommendations result as JSON")
-                return {"recommendations_error": "Could not generate recommendations"}
+                logger.warning("Could not parse enhanced recommendations result as JSON")
+                return {"recommendations_error": "Could not generate enhanced recommendations"}
         
-        logger.info("Recommendation generation completed successfully")
+        logger.info("Enhanced recommendation generation completed successfully")
         return result
     
     except Exception as e:
-        logger.error(f"Error generating recommendations: {str(e)}", exc_info=True)
-        return {"recommendations_error": f"Error generating recommendations: {str(e)}"}
+        logger.error(f"Error generating enhanced recommendations: {str(e)}", exc_info=True)
+        return {"recommendations_error": f"Error generating enhanced recommendations: {str(e)}"}
+
 
 # If this module is run directly
 if __name__ == "__main__":
