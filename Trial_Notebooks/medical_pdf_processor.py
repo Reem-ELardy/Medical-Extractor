@@ -687,7 +687,7 @@ def extract_searchable_conditions(medical_problem: str) -> str:
     - Output max 5 key conditions
 
     OUTPUT:
-    Return only a JSON array of simplified medical condition terms.
+    Return only a JSON array of simplified medicazl condition terms.
 
     Example:
     INPUT: "Maxillo-ethmoidal and frontal sinusitis, Nasal septum deviation, Hypertrophied inferior nasal turbinates, Allergic rhinitis"
@@ -1294,14 +1294,14 @@ def scrape_medlineplus_treatments(conditions: List[str]) -> str:
     return json.dumps(results, indent=2)
 
 @tool
-def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = "", webmd_data: str = "") -> str:
+def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = "", medlineplus_data: str = "") -> str:
     """
     Generate enhanced medical recommendations combining patient data with scraped treatment guidelines.
     
     Args:
         patient_data (str): Patient's structured medical data
         mayo_data (str): Treatment data scraped from Mayo Clinic
-        webmd_data (str): Treatment data scraped from Medline-Plus
+        medlineplus_data (str): Treatment data scraped from Medline-Plus
         
     Returns:
         str: JSON string with enhanced recommendations including source attribution
@@ -1324,13 +1324,13 @@ def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = ""
         mayo_treatments = {}
     
     try:
-        webmd_treatments = json.loads(webmd_data) if webmd_data else {}
+        medlineplus_treatments = json.loads(medlineplus_data) if medlineplus_data else {}
     except json.JSONDecodeError:
-        webmd_treatments = {}
+        medlineplus_treatments = {}
     
     logger.debug(f"Processing patient: {patient_info.get('Patient Information', 'Unknown')}")
     logger.debug(f"Mayo treatments available: {len(mayo_treatments)}")
-    logger.debug(f"WebMD treatments available: {len(webmd_treatments)}")
+    logger.debug(f"MedLinePlus treatments available: {len(medlineplus_treatments)}")
     
     # Create enhanced prompt with web data
     prompt = f"""
@@ -1342,13 +1342,13 @@ def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = ""
     CURRENT MAYO CLINIC TREATMENT GUIDELINES:
     {json.dumps(mayo_treatments, indent=2)}
 
-    CURRENT WEBMD TREATMENT PROTOCOLS:
-    {json.dumps(webmd_treatments, indent=2)}
+    CURRENT MedLinePlus TREATMENT PROTOCOLS:
+    {json.dumps(medlineplus_treatments, indent=2)}
 
     INSTRUCTIONS:
     Generate 2-3 comprehensive recommendations that:
 
-    1. **INTEGRATE CURRENT GUIDELINES**: Use the latest treatment information from Mayo Clinic and WebMD to ensure recommendations are current and evidence-based.
+    1. **INTEGRATE CURRENT GUIDELINES**: Use the latest treatment information from Mayo Clinic and MedLinePlus to ensure recommendations are current and evidence-based.
 
     2. **PERSONALIZE FOR PATIENT**: Tailor recommendations specifically to this patient's conditions and circumstances.
 
@@ -1404,7 +1404,7 @@ def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = ""
             sources_used = []
             if mayo_treatments:
                 sources_used.append("Mayo Clinic")
-            if webmd_treatments:
+            if medlineplus_treatments:
                 sources_used.append("Medline-Plus")
             
             recommendations["sources_used"] = sources_used
@@ -1893,54 +1893,5 @@ def generate_recommendations(structured_data: Dict[str, Any]) -> Dict[str, Any]:
 # If this module is run directly
 if __name__ == "__main__":
     logger.info("medical_pdf_processor.py module loaded")
-
-    # structured_data = {                                                                                                                                                                                        
-    #     "Patient Information": "Name: Nashwa Ahmed Rada, Age: 37, Gender: Female",                                                                                                             
-    #     "Date of Issue": "20.10.2024",                                                                                                                                                         
-    #     "Type of Report": "Hospital Discharge Summary",                                                                                                                                        
-    #     "Medical Problem": """Acute pancreatitis, sepsis (urinary tract infection, pneumonia), recurrent urinary gravels and stones, recent laparoscopic exploration and appendectomy, facial    
-    #         nerve palsy, hepatomegaly, right renal gravels with mild right hydronephrosis, bilateral pneumonia""",                                                                                     
-    #     "Simplified Explanation": """The patient has acute pancreatitis, which is inflammation of the pancreas, and sepsis, a severe response to infection. The sepsis is due to a urinary tract 
-    #         infection and pneumonia. She also has a history of kidney stones, recently had surgery to explore her abdomen and remove her appendix, and has facial nerve palsy. Additionally, the     
-    #         liver is enlarged, there are kidney stones with mild swelling in the right kidney, and pneumonia in both lungs."""                                                                         
-    # } 
-    # recommendations_result = generate_recommendations(structured_data)
-    # print(recommendations_result)
-    
-    # structured_data = {                                                                                                                                                     
-    #     "Patient Information": "Name: Sameh Mohamed Elsayed, Age: 38, Gender: Male",                                                                        
-    #     "Date of Issue": "18/03/2014",                                                                                                                      
-    #     "Type of Report": "Radiology Report",                                                                                                               
-    #     "Medical Problem": "Maxillo-ethmoidal and frontal sinusitis, Nasal septum deviation, Hypertrophied inferior nasal turbinates, Allergic rhinitis",   
-    #     "Simplified Explanation": "The patient has inflammation of the sinuses in the face and forehead, a slightly shifted nasal septum, enlarged structures inside the nose, and a history of allergies that affect the nose."                                                                         
-    # } 
-
-
-    # structured_data = {
-    #     "Patient Information": "Name: MR SAMEH MOHAMED EL-SAYED ATTEYA",
-    #     "Date of Issue": "03/06/2007",
-    #     "Type of Report": "Ultrasonography Report",
-    #     "Medical Problem": "Normal abdominal ultrasonography",
-    #     "Simplified Explanation": "The ultrasound of your abdomen appears normal."
-    # } 
-    # 
-
-    # structured_data = {
-    #     "Patient Information": "Name: MRSAMEH MOHAMED",
-    #     "Date of Issue": "23 October 2009",
-    #     "Type of Report": "U.S REPORT PELVIABDOMINAL_ULTRASONOGRAPHY",
-    #     "Medical Problem": "Calcular bladder",
-    #     "Simplified Explanation": "The gallbladder is filled with stones."
-    # } 
-    # 
-
-    # structured_data = {
-    #     "Patient Information": "Name: MR SAMEH EL SAYED",
-    #     "Date of Issue": "30 August 2009",
-    #     "Type of Report": "Abdominal Ultrasonography Report",
-    #     "Medical Problem": "Normal abdominal ultrasound study",
-    #     "Simplified Explanation": "The abdominal ultrasound results are normal, showing no abnormalities in the liver, gallbladder, pancreas, spleen, kidneys, or other abdominal structures." 
-    # }                                                                                                                                                                                       
-
 
     
