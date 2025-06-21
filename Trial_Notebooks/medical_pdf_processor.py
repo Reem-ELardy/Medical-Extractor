@@ -15,7 +15,7 @@ The main components are:
 5. User feedback processing
 
 New Features:
-- Real-time treatment guideline scraping from Mayo Clinic and WebMD
+- Real-time treatment guideline scraping from Mayo Clinic and Medline-Plus
 - Intelligent condition extraction for web searching
 - Multi-layer fallback system for reliability
 - Day-long caching for scraped data
@@ -25,7 +25,6 @@ Dependencies:
 - crewai: For agent orchestration
 - easyocr: For OCR text extraction
 - requests: For Mayo Clinic scraping
-- playwright: For WebMD scraping
 - beautifulsoup4: For HTML parsing
 - OpenAI API: For GPT-4 capabilities
 """
@@ -108,594 +107,6 @@ def load_environment():
         logger.info("Please ensure you have a .env file with GEMINI_API_KEY set")
     
     return env_loaded
-
-#############################################################################
-# MAYO CLINIC ENHANCED SCRAPER CLASSES
-#############################################################################
-
-@dataclass
-class MedicalCondition:
-    """Data class to store medical condition information"""
-    name: str
-    source: str
-    url: str
-    diagnosis: str = ""
-    symptoms: List[str] = None
-    treatments: List[str] = None
-    overview: str = ""
-    scraped_at: str = ""
-    
-    def __post_init__(self):
-        if self.symptoms is None:
-            self.symptoms = []
-        if self.treatments is None:
-            self.treatments = []
-        if not self.scraped_at:
-            self.scraped_at = datetime.now().isoformat()
-
-class MayoClinicScraper:
-    """
-    Enhanced scraper for Mayo Clinic website using requests + BeautifulSoup
-    Focuses on diagnosis-treatment pages and h2 Treatment sections with h3 subsections
-    """
-    
-    def __init__(self):
-        self.base_url = "https://www.mayoclinic.org"
-        self.session = requests.Session()
-        
-        # Set realistic headers to avoid blocking
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1'
-        })
-        
-        self.rate_limit_delay = (1, 3)  # Random delay between 1-3 seconds
-        logger.info("Enhanced Mayo Clinic scraper initialized")
-    
-    def _get_page(self, url: str) -> Optional[BeautifulSoup]:
-        """
-        Fetch and parse a web page with rate limiting and error handling
-        """
-        try:
-            # Add random delay to be respectful
-            delay = random.uniform(*self.rate_limit_delay)
-            time.sleep(delay)
-            
-            logger.info(f"Fetching: {url}")
-            response = self.session.get(url, timeout=10)
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
-            logger.debug(f"Successfully parsed page: {url}")
-            return soup
-            
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error fetching {url}: {e}")
-            return None
-        except Exception as e:
-            logger.error(f"Unexpected error parsing {url}: {e}")
-            return None
-    
-    def _check_url_exists(self, url: str) -> bool:
-        """Enhanced URL checking with better error handling and logging"""
-        try:
-            logger.debug(f"Checking URL existence: {url}")
-            response = self.session.head(url, timeout=8, allow_redirects=True)
-            
-            # Accept both 200 and 3xx redirects as valid
-            if response.status_code in [200, 301, 302, 303, 307, 308]:
-                logger.debug(f"✅ URL exists (status {response.status_code}): {url}")
-                return True
-            else:
-                logger.debug(f"❌ URL not found (status {response.status_code}): {url}")
-                return False
-                
-        except requests.exceptions.Timeout:
-            logger.debug(f"⏱️ Timeout checking URL: {url}")
-            return False
-        except requests.exceptions.RequestException as e:
-            logger.debug(f"❌ Error checking URL {url}: {e}")
-            return False
-        except Exception as e:
-            logger.debug(f"❌ Unexpected error checking URL {url}: {e}")
-            return False
-    
-    def search_conditions(self, query: str) -> List[str]:
-        """
-        Generic search for medical conditions on Mayo Clinic
-        Automatically discovers the correct URL structure and finds diagnosis-treatment pages only
-        """
-        search_urls = []
-        
-        # Clean the query for URL formation
-        clean_query = query.lower().replace(' ', '-').replace('_', '-')
-        
-        # Basic URL patterns to try
-        base_patterns = [
-            clean_query,
-            f"chronic-{clean_query}",
-            f"acute-{clean_query}",
-            clean_query.replace('-', ''),
-            clean_query.replace('-', ' ').replace(' ', '')
-        ]
-        
-        logger.info(f"Searching Mayo Clinic for '{query}' using patterns: {base_patterns}")
-        
-        # For each base pattern, try to find the main condition page first
-        for pattern in base_patterns:
-            base_url = f"{self.base_url}/diseases-conditions/{pattern}"
-            
-            # Check if the base condition page exists
-            if self._check_url_exists(base_url):
-                logger.info(f"✅ Found base condition page: {base_url}")
-                
-                # Now find the diagnosis-treatment page specifically
-                condition_urls = self._discover_condition_subpages(base_url, pattern)
-                search_urls.extend(condition_urls)
-                
-                if search_urls:
-                    break  # Found working URLs, no need to try more patterns
-        
-        # If no direct patterns worked, try alternative discovery methods
-        if not search_urls:
-            search_urls = self._alternative_discovery(query)
-        
-        return search_urls
-    
-    def _discover_condition_subpages(self, base_url: str, condition_pattern: str) -> List[str]:
-        """
-        Given a base condition URL, discover only the diagnosis-treatment subpage
-        """
-        subpage_urls = []
-        
-        # Only look for diagnosis-treatment page
-        target_subpage = "diagnosis-treatment"
-        
-        # First, get the base page to find actual subpage links
-        soup = self._get_page(base_url)
-        if soup:
-            # Look for links to diagnosis-treatment page in the navigation or content
-            all_links = soup.find_all('a', href=True)
-            
-            for link in all_links:
-                href = link.get('href')
-                if href:
-                    # Convert relative URLs to absolute
-                    if href.startswith('/'):
-                        full_url = urljoin(self.base_url, href)
-                    elif href.startswith('http'):
-                        full_url = href
-                    else:
-                        continue
-                    
-                    # Check if this link is the diagnosis-treatment page we're looking for
-                    if f"/diseases-conditions/{condition_pattern}/{target_subpage}/" in full_url:
-                        if full_url not in subpage_urls:
-                            subpage_urls.append(full_url)
-                            logger.info(f"✅ Found diagnosis-treatment page via scraping: {full_url}")
-                            break  # Found it, no need to continue
-        
-        # If scraping didn't find the diagnosis-treatment page, try simple pattern
-        if not subpage_urls:
-            test_url = f"{self.base_url}/diseases-conditions/{condition_pattern}/{target_subpage}"
-            if self._check_url_exists(test_url):
-                subpage_urls.append(test_url)
-                logger.info(f"✅ Found diagnosis-treatment page via simple pattern: {test_url}")
-        
-        # Return the diagnosis-treatment page or base URL as fallback
-        return subpage_urls if subpage_urls else ([base_url] if self._check_url_exists(base_url) else [])
-    
-    def _alternative_discovery(self, query: str) -> List[str]:
-        """
-        Alternative discovery method when direct patterns fail
-        """
-        logger.info(f"Attempting alternative discovery for: {query}")
-        
-        # Try to extract key medical terms and search for them
-        words = query.lower().replace('-', ' ').split()
-        
-        # Common medical term transformations
-        transformations = {
-            'deviation': 'deviated',
-            'enlargement': 'enlarged', 
-            'inflammation': 'inflamed',
-            'infection': 'infected'
-        }
-        
-        # Transform words and create new patterns
-        transformed_words = []
-        for word in words:
-            if word in transformations:
-                transformed_words.append(transformations[word])
-            else:
-                transformed_words.append(word)
-        
-        # Try different combinations
-        test_patterns = [
-            '-'.join(transformed_words),
-            '-'.join(words[:2]) if len(words) > 1 else words[0],
-            '-'.join(reversed(words)) if len(words) > 1 else words[0],
-            words[-1] if len(words) > 1 else words[0]  # Try just the last word
-        ]
-        
-        for pattern in test_patterns:
-            base_url = f"{self.base_url}/diseases-conditions/{pattern}"
-            if self._check_url_exists(base_url):
-                return self._discover_condition_subpages(base_url, pattern)
-        
-        return []
-    
-    def extract_condition_info(self, url: str) -> Optional[MedicalCondition]:
-        """
-        Extract comprehensive information about a medical condition
-        Focus on diagnosis-treatment page only
-        """
-        logger.info(f"Processing condition URL: {url}")
-        
-        # If this is a base condition page (no subpage), find the diagnosis-treatment subpage
-        if '/diagnosis-treatment/' not in url:
-            # Extract condition pattern from URL
-            condition_pattern = self._extract_condition_pattern(url)
-            if condition_pattern:
-                logger.info(f"Base page detected, finding diagnosis-treatment subpage for: {condition_pattern}")
-                subpage_urls = self._discover_condition_subpages(url, condition_pattern)
-                
-                if subpage_urls:
-                    # Process the diagnosis-treatment page
-                    for subpage_url in subpage_urls:
-                        if 'diagnosis-treatment' in subpage_url:
-                            return self._extract_from_single_page(subpage_url)
-                    # If no diagnosis-treatment page found, process the first available page
-                    return self._extract_from_single_page(subpage_urls[0])
-        
-        # Single page processing (already on diagnosis-treatment page)
-        return self._extract_from_single_page(url)
-    
-    def _extract_condition_pattern(self, url: str) -> str:
-        """Extract the condition pattern from a Mayo Clinic URL"""
-        try:
-            # Parse URL like: https://www.mayoclinic.org/diseases-conditions/chronic-sinusitis
-            parts = url.split('/diseases-conditions/')
-            if len(parts) > 1:
-                pattern = parts[1].split('/')[0]  # Get first part after diseases-conditions
-                return pattern
-        except:
-            pass
-        return ""
-    
-    def _extract_from_single_page(self, url: str) -> Optional[MedicalCondition]:
-        """Extract information from a single Mayo Clinic page"""
-        soup = self._get_page(url)
-        if not soup:
-            return None
-        
-        try:
-            # Extract condition name
-            condition_name = self._extract_title(soup)
-            if not condition_name:
-                condition_name = "Unknown Condition"
-            
-            # Initialize condition object
-            condition = MedicalCondition(
-                name=condition_name,
-                source="Mayo Clinic",
-                url=url
-            )
-            
-            # Extract overview/description
-            condition.overview = self._extract_overview(soup)
-            
-            # Extract symptoms (minimal for diagnosis-treatment focus)
-            condition.symptoms = self._extract_symptoms(soup)
-            
-            # Extract treatments (enhanced for h2 Treatment sections with h3 subsections)
-            condition.treatments = self._extract_treatments(soup)
-            
-            # Extract diagnosis information
-            condition.diagnosis = self._extract_diagnosis(soup)
-            
-            logger.info(f"Successfully extracted info for: {condition_name}")
-            logger.debug(f"Found {len(condition.symptoms)} symptoms, {len(condition.treatments)} treatments")
-            
-            return condition
-            
-        except Exception as e:
-            logger.error(f"Error extracting condition info from {url}: {e}")
-            return None
-    
-    def _extract_title(self, soup: BeautifulSoup) -> str:
-        """Extract page title from Mayo Clinic page"""
-        title_selectors = [
-            'h1.content-title',
-            'h1[data-page-title]',
-            '.page-header h1',
-            'h1',
-            '.content-title'
-        ]
-        
-        for selector in title_selectors:
-            title_elem = soup.select_one(selector)
-            if title_elem:
-                title = title_elem.get_text().strip()
-                if title:
-                    return title
-        
-        return ""
-    
-    def _extract_overview(self, soup: BeautifulSoup) -> str:
-        """Extract overview/description from Mayo Clinic page"""
-        overview_selectors = [
-            '.content .highlight p',  # Mayo Clinic highlight boxes
-            '.overview-content p:first-of-type',
-            '.content-main p:first-of-type',
-            '.page-content p:first-of-type',
-            'p:first-of-type'
-        ]
-        
-        for selector in overview_selectors:
-            overview_elem = soup.select_one(selector)
-            if overview_elem:
-                text = overview_elem.get_text().strip()
-                if text and len(text) > 50:
-                    return text
-        
-        return ""
-    
-    def _extract_symptoms(self, soup: BeautifulSoup) -> List[str]:
-        """Extract symptoms from Mayo Clinic page (minimal for diagnosis-treatment focus)"""
-        symptoms = []
-        
-        # Basic symptom extraction for diagnosis-treatment pages
-        symptoms_selectors = [
-            '[class*="symptoms" i] ul li',
-            '[id*="symptoms" i] ul li',
-            '.content ul li',
-        ]
-        
-        for selector in symptoms_selectors:
-            try:
-                elements = soup.select(selector)
-                for elem in elements:
-                    symptom = elem.get_text().strip()
-                    if symptom and len(symptom) > 5:
-                        symptoms.append(symptom)
-                
-                if symptoms:
-                    break  # Found symptoms, no need to try other selectors
-            except Exception as e:
-                logger.debug(f"Error with selector {selector}: {e}")
-                continue
-        
-        # Remove duplicates and limit results
-        return list(dict.fromkeys(symptoms))[:10]
-    
-    def _extract_treatments(self, soup: BeautifulSoup) -> List[str]:
-        """Extract treatment information from Mayo Clinic diagnosis-treatment page, focusing on h2 'Treatment' section and all h3 subsections"""
-        treatments = []
-        
-        # First, look specifically for h2 with "Treatment" text
-        treatment_h2 = soup.find('h2', string=re.compile(r'^Treatment$', re.I))
-        
-        if treatment_h2:
-            logger.info("✅ Found h2 'Treatment' section")
-            
-            # Get content following the Treatment h2
-            current = treatment_h2.next_sibling
-            
-            while current:
-                if hasattr(current, 'name'):
-                    # Stop when we hit another h2 (next major section)
-                    if current.name == 'h2':
-                        logger.info(f"Stopped at next h2: {current.get_text().strip()}")
-                        break
-                    
-                    # Process h3 headers (treatment subsections)
-                    elif current.name == 'h3':
-                        h3_text = current.get_text().strip()
-                        logger.info(f"Found h3 treatment subsection: {h3_text}")
-                        
-                        # Add the h3 header as a treatment category
-                        if h3_text and len(h3_text) > 3:
-                            treatments.append(f"**{h3_text}**")
-                        
-                        # Get content following this h3 until next h3 or h2
-                        h3_current = current.next_sibling
-                        while h3_current:
-                            if hasattr(h3_current, 'name'):
-                                if h3_current.name in ['h2', 'h3']:
-                                    break  # Stop at next heading
-                                elif h3_current.name in ['ul', 'ol']:
-                                    # Extract list items under this h3
-                                    items = h3_current.find_all('li')
-                                    for item in items:
-                                        treatment = item.get_text().strip()
-                                        if treatment and len(treatment) > 10:
-                                            treatments.append(f"  • {treatment}")
-                                elif h3_current.name == 'p':
-                                    # Extract paragraph content under this h3
-                                    text = h3_current.get_text().strip()
-                                    if text and len(text) > 20:
-                                        treatments.append(f"  {text}")
-                                elif h3_current.name == 'div':
-                                    # Look inside divs for nested content
-                                    div_lists = h3_current.find_all(['ul', 'ol'])
-                                    for ul in div_lists:
-                                        items = ul.find_all('li')
-                                        for item in items:
-                                            treatment = item.get_text().strip()
-                                            if treatment and len(treatment) > 10:
-                                                treatments.append(f"  • {treatment}")
-                                    
-                                    # Also check paragraphs in the div
-                                    div_paras = h3_current.find_all('p')
-                                    for para in div_paras:
-                                        text = para.get_text().strip()
-                                        if text and len(text) > 20:
-                                            treatments.append(f"  {text}")
-                            
-                            h3_current = h3_current.next_sibling
-                    
-                    # Process direct content under the main h2 (before any h3s)
-                    elif current.name in ['ul', 'ol']:
-                        # Extract list items directly under h2
-                        items = current.find_all('li')
-                        for item in items:
-                            treatment = item.get_text().strip()
-                            if treatment and len(treatment) > 10:
-                                treatments.append(treatment)
-                    elif current.name == 'p':
-                        # Extract paragraph content directly under h2
-                        text = current.get_text().strip()
-                        if text and len(text) > 20:
-                            treatments.append(text)
-                    elif current.name == 'div':
-                        # Look inside divs for nested content directly under h2
-                        div_lists = current.find_all(['ul', 'ol'])
-                        for ul in div_lists:
-                            items = ul.find_all('li')
-                            for item in items:
-                                treatment = item.get_text().strip()
-                                if treatment and len(treatment) > 10:
-                                    treatments.append(treatment)
-                        
-                        # Also check paragraphs in the div
-                        div_paras = current.find_all('p')
-                        for para in div_paras:
-                            text = para.get_text().strip()
-                            if text and len(text) > 20:
-                                treatments.append(text)
-                
-                current = current.next_sibling
-        
-        # If no h2 'Treatment' found, try other treatment headings as fallback
-        if not treatments:
-            logger.info("No h2 'Treatment' found, trying alternative headings")
-            treatment_headings = soup.find_all(['h2', 'h3', 'h4'], 
-                                             string=re.compile(r'treatment|therapy|management|care|medication', re.I))
-            
-            for heading in treatment_headings:
-                logger.info(f"Found treatment heading: {heading.get_text().strip()}")
-                # Get content following the heading
-                current = heading.next_sibling
-                found_items = 0
-                
-                while current and found_items < 10:
-                    if hasattr(current, 'name'):
-                        if current.name in ['ul', 'ol']:
-                            items = current.find_all('li')
-                            for item in items:
-                                treatment = item.get_text().strip()
-                                if treatment and len(treatment) > 10:
-                                    treatments.append(treatment)
-                                    found_items += 1
-                        elif current.name == 'p':
-                            text = current.get_text().strip()
-                            if text and len(text) > 20:
-                                treatments.append(text)
-                                found_items += 1
-                        elif current.name in ['h2', 'h3', 'h4']:
-                            break  # Stop at next heading
-                    
-                    current = current.next_sibling
-                
-                if treatments:
-                    break  # Found treatments, no need to check other headings
-        
-        # If still no treatments found, try enhanced selectors as final fallback
-        if not treatments:
-            logger.info("No treatment headings found, trying enhanced selectors")
-            treatment_selectors = [
-                '[class*="treatment" i] ul li',
-                '[class*="treatment" i] ol li',
-                '[class*="therapy" i] ul li',
-                '[class*="management" i] ul li',
-                '[id*="treatment" i] ul li',
-                '[id*="treatment" i] ol li',
-                '.content ul li',
-                '.page-content ul li', 
-                '.main-content ul li',
-            ]
-            
-            for selector in treatment_selectors:
-                try:
-                    elements = soup.select(selector)
-                    for elem in elements:
-                        treatment = elem.get_text().strip()
-                        if treatment and len(treatment) > 10:
-                            treatments.append(treatment)
-                    
-                    if treatments:
-                        break
-                except Exception as e:
-                    logger.debug(f"Error with treatment selector {selector}: {e}")
-                    continue
-        
-        # Remove duplicates while preserving order and limit results
-        unique_treatments = list(dict.fromkeys(treatments))
-        logger.info(f"Extracted {len(unique_treatments)} treatments (including h3 subsections)")
-        
-        # Log the structure found
-        h3_count = len([t for t in unique_treatments if t.startswith('**')])
-        logger.info(f"Found {h3_count} h3 treatment subsections")
-        
-        return unique_treatments[:25]  # Increased limit to accommodate h3 sections
-    
-    def _extract_diagnosis(self, soup: BeautifulSoup) -> str:
-        """Extract diagnosis information from Mayo Clinic page"""
-        diagnosis_text = ""
-        
-        # Look for diagnosis headings
-        diagnosis_headings = soup.find_all(['h2', 'h3', 'h4'], 
-                                         string=re.compile(r'diagnosis|diagnostic|tests?|testing', re.I))
-        
-        for heading in diagnosis_headings:
-            # Get following content
-            paragraphs = []
-            current = heading.next_sibling
-            
-            while current and len(paragraphs) < 3:
-                if hasattr(current, 'name'):
-                    if current.name == 'p':
-                        text = current.get_text().strip()
-                        if text and len(text) > 20:
-                            paragraphs.append(text)
-                    elif current.name in ['h2', 'h3', 'h4']:
-                        break  # Stop at next heading
-                
-                current = current.next_sibling
-            
-            if paragraphs:
-                diagnosis_text = ' '.join(paragraphs)[:800]  # Limit length
-                break
-        
-        # Alternative: look for diagnosis sections
-        if not diagnosis_text:
-            diagnosis_selectors = [
-                '[class*="diagnosis" i]',
-                '[id*="diagnosis" i]',
-                '[class*="diagnostic" i]',
-                '[class*="testing" i]'
-            ]
-            
-            for selector in diagnosis_selectors:
-                try:
-                    elements = soup.select(selector)
-                    for elem in elements:
-                        text = elem.get_text().strip()
-                        if text and len(text) > 50:
-                            diagnosis_text = text[:800]
-                            break
-                    if diagnosis_text:
-                        break
-                except:
-                    continue
-        
-        return diagnosis_text
-
 #############################################################################
 # ENVIRONMENT AND LLM SETUP
 #############################################################################
@@ -771,13 +182,6 @@ except Exception as e:
     logger.warning(f"Medical RAG initialization failed: {e}")
     medical_rag = None
 
-# Initialize enhanced Mayo Clinic scraper
-try:
-    mayo_scraper = MayoClinicScraper()
-    logger.info("Enhanced Mayo Clinic scraper initialized successfully")
-except Exception as e:
-    logger.error(f"Failed to initialize Mayo Clinic scraper: {e}")
-    mayo_scraper = None
     
 #############################################################################
 # CACHING UTILITIES
@@ -876,7 +280,6 @@ def extract_text_from_image(image_path: str) -> str:
     except Exception as e:
         logger.error(f"Error during image text extraction: {str(e)}", exc_info=True)
         raise Exception(f"Failed to extract text from image: {str(e)}")
-
 
 @tool
 def validate_medical_values(data: str) -> str:
@@ -1270,7 +673,7 @@ def extract_searchable_conditions(medical_problem: str) -> str:
 
     prompt = f"""
     You are a medical domain expert trained to convert complex clinical findings into
-    simplified, patient-friendly terms that users can easily search online (like on Mayo Clinic or WebMD).
+    simplified, patient-friendly terms that users can easily search online (like on Mayo Clinic or Medline-Plus).
 
     INPUT MEDICAL REPORT:
     "{medical_problem}"
@@ -1302,103 +705,439 @@ def extract_searchable_conditions(medical_problem: str) -> str:
 @tool
 def scrape_mayo_treatments(conditions: List[str]) -> str:
     """
-    Enhanced Mayo Clinic scraper using the integrated MayoClinicScraper class.
-    Scrapes treatment information from Mayo Clinic for given medical conditions.
+    Scrape treatment information from Mayo Clinic for given medical conditions
+    using the exact same logic as the MayoClinicScraper class.
     
     Args:
         conditions (List[str]): List of medical conditions to search for treatments
     
     Returns:
-        str: JSON string with enhanced treatment information from Mayo Clinic
+        str: JSON string with treatment information from Mayo Clinic
     """
-    logger.info(f"Starting enhanced Mayo Clinic scraping for conditions: {conditions}")
-    
     if isinstance(conditions, str):
         try:
             conditions = json.loads(conditions)
         except json.JSONDecodeError:
             conditions = [conditions]
     
-    if not mayo_scraper:
-        logger.error("Mayo Clinic scraper not initialized")
-        return json.dumps({"error": "Mayo Clinic scraper not available"})
+    results = {}
+    base_url = "https://www.mayoclinic.org"
     
-    treatment_data = {}
+    # Set up session with proper headers
+    session = requests.Session()
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
+    })
     
+    def clean_query_for_url(query: str) -> str:
+        """
+        Clean and standardize query for URL formation
+        Directly implements MayoClinicScraper._clean_query_for_url logic
+        """
+        # Convert to lowercase
+        clean_query = query.lower()
+        
+        # Remove common punctuation but preserve meaningful separators temporarily
+        punctuation_to_remove = "'\".,()[]{}!?;:"
+        for punct in punctuation_to_remove:
+            clean_query = clean_query.replace(punct, '')
+        
+        # Replace underscores and multiple spaces with single spaces
+        clean_query = re.sub(r'[_]+', ' ', clean_query)
+        clean_query = re.sub(r'\s+', ' ', clean_query)
+        
+        # Replace spaces with hyphens
+        clean_query = clean_query.replace(' ', '-')
+        
+        # Remove multiple consecutive hyphens
+        clean_query = re.sub(r'-+', '-', clean_query)
+        
+        # Remove leading/trailing hyphens
+        clean_query = clean_query.strip('-')
+        
+        return clean_query
+    
+    def check_url_exists(url: str) -> bool:
+        """
+        Check if a URL exists with better error handling
+        Directly implements MayoClinicScraper._check_url_exists logic
+        """
+        try:
+            response = session.head(url, timeout=8, allow_redirects=True)
+            
+            # Accept both 200 and 3xx redirects as valid
+            if response.status_code in [200, 301, 302, 303, 307, 308]:
+                return True
+            else:
+                return False
+                
+        except Exception:
+            return False
+    
+    def get_page(url: str) -> Optional[BeautifulSoup]:
+        """
+        Fetch and parse a web page with error handling
+        Directly implements MayoClinicScraper._get_page logic
+        """
+        try:
+            # Add random delay to be respectful
+            delay = random.uniform(1, 3)
+            time.sleep(delay)
+            
+            response = session.get(url, timeout=10)
+            response.raise_for_status()
+            
+            return BeautifulSoup(response.content, 'html.parser')
+            
+        except Exception:
+            return None
+    
+    def discover_condition_subpages(base_url: str, condition_pattern: str) -> List[str]:
+        """
+        Directly implements MayoClinicScraper._discover_condition_subpages logic
+        """
+        subpage_urls = []
+        
+        # Only look for diagnosis-treatment page
+        target_subpage = "diagnosis-treatment"
+        
+        # First, get the base page to find actual subpage links
+        soup = get_page(base_url)
+        if soup:
+            # Look for links to diagnosis-treatment page in the navigation or content
+            all_links = soup.find_all('a', href=True)
+            
+            for link in all_links:
+                href = link.get('href')
+                if href:
+                    # Convert relative URLs to absolute
+                    if href.startswith('/'):
+                        full_url = urljoin(base_url, href)
+                    elif href.startswith('http'):
+                        full_url = href
+                    else:
+                        continue
+                    
+                    # Check if this link is the diagnosis-treatment page we're looking for
+                    if f"/diseases-conditions/{condition_pattern}/{target_subpage}/" in full_url:
+                        if full_url not in subpage_urls:
+                            subpage_urls.append(full_url)
+                            break  # Found it, no need to continue
+        
+        # If scraping didn't find the diagnosis-treatment page, try simple pattern
+        if not subpage_urls:
+            test_url = f"{base_url}/diseases-conditions/{condition_pattern}/{target_subpage}"
+            if check_url_exists(test_url):
+                subpage_urls.append(test_url)
+        
+        # Return the diagnosis-treatment page or base URL as fallback
+        return subpage_urls if subpage_urls else ([base_url] if check_url_exists(base_url) else [])
+    
+    def search_conditions(query: str) -> List[str]:
+        """
+        Directly implements MayoClinicScraper.search_conditions logic
+        """
+        search_urls = []
+        
+        # Clean the query for URL formation
+        clean_query = clean_query_for_url(query)
+    
+        # Basic URL patterns to try
+        base_patterns = [
+            clean_query,
+            clean_query.replace('-', ''),
+            clean_query.replace('-', ' ').replace(' ', ''),
+            f"chronic-{clean_query}",
+            f"acute-{clean_query}"
+        ]
+        
+        # For each base pattern, try to find the main condition page first
+        for pattern in base_patterns:
+            condition_url = f"{base_url}/diseases-conditions/{pattern}"
+            
+            # Check if the base condition page exists
+            if check_url_exists(condition_url):
+                # Now find the diagnosis-treatment page specifically
+                condition_urls = discover_condition_subpages(condition_url, pattern)
+                search_urls.extend(condition_urls)
+                
+                if search_urls:
+                    break  # Found working URLs, no need to try more patterns
+        
+        # If no direct patterns worked, try alternative discovery methods
+        if not search_urls:
+            # Extract key medical terms and search for them
+            words = query.lower().replace('-', ' ').split()
+            
+            # Common medical term transformations
+            transformations = {
+                'deviation': 'deviated',
+                'enlargement': 'enlarged', 
+                'inflammation': 'inflamed',
+                'infection': 'infected',
+                'deficiency': 'deficient',
+                'insufficiency': 'insufficient',
+                'dysfunction': 'dysfunctional',
+                'syndrome': 'disease',
+                'disorder': 'condition',
+                'palsy': 'paralysis',
+            }
+            
+            # Transform words and create new patterns
+            transformed_words = []
+            for word in words:
+                if word in transformations:
+                    transformed_words.append(transformations[word])
+                else:
+                    transformed_words.append(word)
+            
+            # Try different combinations
+            test_patterns = [
+                # Transformed version
+                '-'.join(transformed_words),
+                # First few words only
+                '-'.join(words[:2]) if len(words) > 1 else words[0],
+                # Reverse order
+                '-'.join(reversed(words)) if len(words) > 1 else words[0],
+                # Just the longest word (often the main medical term)
+                max(words, key=len) if len(words) > 1 else None,
+                # Last word only (often a key term)
+                words[-1] if len(words) > 1 else words[0],
+            ]
+            
+            test_patterns = [p for p in test_patterns if p]  # Remove None values
+            
+            for pattern in test_patterns:
+                condition_url = f"{base_url}/diseases-conditions/{pattern}"
+                if check_url_exists(condition_url):
+                    return discover_condition_subpages(condition_url, pattern)
+        
+        return search_urls
+    
+    def extract_treatments(soup: BeautifulSoup) -> List[str]:
+        """
+        Extract treatment information from Mayo Clinic page, 
+        directly implementing MayoClinicScraper._extract_treatments logic
+        """
+        treatments = []
+        
+        # First, look specifically for h2 with "Treatment" text
+        treatment_h2 = None
+        for h2 in soup.find_all('h2'):
+            if re.match(r'^\s*Treatment\s*$', h2.get_text().strip(), re.I):
+                treatment_h2 = h2
+                break
+        
+        if treatment_h2:
+            # Get content following the Treatment h2
+            current = treatment_h2.next_sibling
+            
+            while current:
+                if hasattr(current, 'name'):
+                    # Stop when we hit another h2 (next major section)
+                    if current.name == 'h2':
+                        break
+                    
+                    # Process h3 headers (treatment subsections)
+                    elif current.name == 'h3':
+                        h3_text = current.get_text().strip()
+                        
+                        # Add the h3 header as a treatment category
+                        if h3_text and len(h3_text) > 3:
+                            treatments.append(f"**{h3_text}**")
+                        
+                        # Get content following this h3 until next h3 or h2
+                        h3_current = current.next_sibling
+                        while h3_current:
+                            if hasattr(h3_current, 'name'):
+                                if h3_current.name in ['h2', 'h3']:
+                                    break  # Stop at next heading
+                                elif h3_current.name in ['ul', 'ol']:
+                                    # Extract list items under this h3
+                                    items = h3_current.find_all('li')
+                                    for item in items:
+                                        treatment = item.get_text().strip()
+                                        if treatment and len(treatment) > 10:
+                                            treatments.append(f"  • {treatment}")
+                                elif h3_current.name == 'p':
+                                    # Extract paragraph content under this h3
+                                    text = h3_current.get_text().strip()
+                                    if text and len(text) > 20:
+                                        treatments.append(f"  {text}")
+                                elif h3_current.name == 'div':
+                                    # Look inside divs for nested content
+                                    div_lists = h3_current.find_all(['ul', 'ol'])
+                                    for ul in div_lists:
+                                        items = ul.find_all('li')
+                                        for item in items:
+                                            treatment = item.get_text().strip()
+                                            if treatment and len(treatment) > 10:
+                                                treatments.append(f"  • {treatment}")
+                                    
+                                    # Also check paragraphs in the div
+                                    div_paras = h3_current.find_all('p')
+                                    for para in div_paras:
+                                        text = para.get_text().strip()
+                                        if text and len(text) > 20:
+                                            treatments.append(f"  {text}")
+                            
+                            h3_current = h3_current.next_sibling
+                    
+                    # Process direct content under the main h2 (before any h3s)
+                    elif current.name in ['ul', 'ol']:
+                        # Extract list items directly under h2
+                        items = current.find_all('li')
+                        for item in items:
+                            treatment = item.get_text().strip()
+                            if treatment and len(treatment) > 10:
+                                treatments.append(treatment)
+                    elif current.name == 'p':
+                        # Extract paragraph content directly under h2
+                        text = current.get_text().strip()
+                        if text and len(text) > 20:
+                            treatments.append(text)
+                    elif current.name == 'div':
+                        # Look inside divs for nested content directly under h2
+                        div_lists = current.find_all(['ul', 'ol'])
+                        for ul in div_lists:
+                            items = ul.find_all('li')
+                            for item in items:
+                                treatment = item.get_text().strip()
+                                if treatment and len(treatment) > 10:
+                                    treatments.append(treatment)
+                        
+                        # Also check paragraphs in the div
+                        div_paras = current.find_all('p')
+                        for para in div_paras:
+                            text = para.get_text().strip()
+                            if text and len(text) > 20:
+                                treatments.append(text)
+                
+                current = current.next_sibling
+        
+        # If no h2 'Treatment' found, try other treatment headings as fallback
+        if not treatments:
+            treatment_headings = soup.find_all(['h2', 'h3', 'h4'], 
+                                             string=re.compile(r'treatment|therapy|management|care|medication', re.I))
+            
+            for heading in treatment_headings:
+                # Get content following the heading
+                current = heading.next_sibling
+                found_items = 0
+                
+                while current and found_items < 10:
+                    if hasattr(current, 'name'):
+                        if current.name in ['ul', 'ol']:
+                            items = current.find_all('li')
+                            for item in items:
+                                treatment = item.get_text().strip()
+                                if treatment and len(treatment) > 10:
+                                    treatments.append(treatment)
+                                    found_items += 1
+                        elif current.name == 'p':
+                            text = current.get_text().strip()
+                            if text and len(text) > 20:
+                                treatments.append(text)
+                                found_items += 1
+                        elif current.name in ['h2', 'h3', 'h4']:
+                            break  # Stop at next heading
+                    
+                    current = current.next_sibling
+                
+                if treatments:
+                    break  # Found treatments, no need to check other headings
+        
+        # If still no treatments found, try enhanced selectors as final fallback
+        if not treatments:
+            treatment_selectors = [
+                '[class*="treatment" i] ul li',
+                '[class*="treatment" i] ol li',
+                '[class*="therapy" i] ul li',
+                '[class*="management" i] ul li',
+                '[id*="treatment" i] ul li',
+                '[id*="treatment" i] ol li',
+                '.content ul li',
+                '.page-content ul li', 
+                '.main-content ul li',
+            ]
+            
+            for selector in treatment_selectors:
+                try:
+                    elements = soup.select(selector)
+                    for elem in elements:
+                        treatment = elem.get_text().strip()
+                        if treatment and len(treatment) > 10:
+                            treatments.append(treatment)
+                    
+                    if treatments:
+                        break
+                except Exception:
+                    continue
+        
+        # Remove duplicates while preserving order
+        unique_treatments = list(dict.fromkeys(treatments))
+        
+        return unique_treatments[:25]  # Limit to 25 items
+    
+    # Process each condition
     for condition in conditions:
         if not condition or not condition.strip():
             continue
             
-        condition = condition.strip()
-        logger.info(f"Processing condition: {condition}")
-        
-        # Check cache first
-        cached_result = get_cached_data(condition, "mayo_enhanced")
-        if cached_result:
-            treatment_data[condition] = cached_result
-            continue
-        
         try:
-            # Use the enhanced Mayo Clinic scraper
-            logger.info(f"Searching Mayo Clinic for: {condition}")
-            condition_urls = mayo_scraper.search_conditions(condition)
+            # Use the search_conditions method to find the correct URL
+            found_urls = search_conditions(condition)
             
-            if condition_urls:
-                logger.info(f"Found {len(condition_urls)} URLs for {condition}")
+            if found_urls:
+                # Get the first URL (preferably diagnosis-treatment)
+                condition_url = found_urls[0]
                 
-                # Process the first (best) URL
-                condition_info = mayo_scraper.extract_condition_info(condition_urls[0])
-                
-                if condition_info and condition_info.treatments:
-                    # Format the enhanced treatment data
-                    enhanced_treatment = {
-                        "condition_name": condition_info.name,
-                        "url": condition_info.url,
-                        "source": "Mayo Clinic Enhanced",
-                        "overview": condition_info.overview,
-                        "treatments": condition_info.treatments,
-                        "diagnosis": condition_info.diagnosis,
-                        "symptoms": condition_info.symptoms[:5],  # Limit symptoms
-                        "scraped_at": condition_info.scraped_at,
-                        "treatment_sections": len([t for t in condition_info.treatments if t.startswith('**')]),
-                        "total_treatments": len(condition_info.treatments)
+                # Fetch the page
+                soup = get_page(condition_url)
+                if soup:
+                    # Extract treatments
+                    treatments = extract_treatments(soup)
+                    
+                    # Join treatments into a string
+                    treatment_text = '\n\n'.join(treatments)
+                    
+                    # Store results
+                    results[condition] = {
+                        "name": condition,
+                        "url": condition_url,
+                        "source": "Mayo Clinic",
+                        "treatment": treatment_text if treatment_text else "No treatment information found"
                     }
-                    
-                    # Convert to text format for compatibility
-                    treatment_text = f"Condition: {condition_info.name}\n"
-                    if condition_info.overview:
-                        treatment_text += f"Overview: {condition_info.overview}\n\n"
-                    
-                    treatment_text += "TREATMENTS:\n"
-                    for treatment in condition_info.treatments:
-                        treatment_text += f"{treatment}\n"
-                    
-                    if condition_info.diagnosis:
-                        treatment_text += f"\nDIAGNOSIS:\n{condition_info.diagnosis}\n"
-                    
-                    treatment_data[condition] = treatment_text
-                    cache_data(condition, "mayo_enhanced", treatment_text)
-                    
-                    logger.info(f"Successfully scraped enhanced Mayo treatment for {condition}")
-                    logger.info(f"Found {enhanced_treatment['treatment_sections']} treatment sections with {enhanced_treatment['total_treatments']} total treatments")
                 else:
-                    logger.warning(f"No treatment content found for {condition} on Mayo Clinic")
-                    treatment_data[condition] = "No treatment information found"
+                    results[condition] = {
+                        "name": condition,
+                        "url": condition_url,
+                        "source": "Mayo Clinic",
+                        "error": "Could not fetch page content"
+                    }
             else:
-                logger.info(f"Mayo Clinic page not found for {condition}")
-                treatment_data[condition] = "Condition page not found"
-        
+                results[condition] = {
+                    "name": condition,
+                    "error": "No Mayo Clinic page found",
+                    "source": "Mayo Clinic"
+                }
+            
+            # Add delay between conditions
+            time.sleep(random.uniform(1.5, 3))
+            
         except Exception as e:
-            logger.error(f"Error scraping Mayo Clinic for {condition}: {str(e)}", exc_info=True)
-            treatment_data[condition] = f"Scraping error: {str(e)}"
-        
-        # Add delay between requests to be respectful
-        time.sleep(2)
+            results[condition] = {
+                "name": condition,
+                "error": str(e),
+                "source": "Mayo Clinic"
+            }
     
-    successful_results = len([v for v in treatment_data.values() if 'error' not in v.lower() and 'not found' not in v.lower()])
-    logger.info(f"Enhanced Mayo Clinic scraping completed. Retrieved {successful_results} successful results")
-    
-    return json.dumps(treatment_data, indent=2)
+    return json.dumps(results, indent=2)
 
 @tool
 def scrape_medlineplus_treatments(conditions: List[str]) -> str:
@@ -1526,7 +1265,7 @@ def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = ""
     Args:
         patient_data (str): Patient's structured medical data
         mayo_data (str): Treatment data scraped from Mayo Clinic
-        webmd_data (str): Treatment data scraped from WebMD
+        webmd_data (str): Treatment data scraped from Medline-Plus
         
     Returns:
         str: JSON string with enhanced recommendations including source attribution
@@ -1571,7 +1310,7 @@ def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = ""
     {json.dumps(webmd_treatments, indent=2)}
 
     INSTRUCTIONS:
-    Generate 3-5 comprehensive recommendations that:
+    Generate 2-3 comprehensive recommendations that:
 
     1. **INTEGRATE CURRENT GUIDELINES**: Use the latest treatment information from Mayo Clinic and WebMD to ensure recommendations are current and evidence-based.
 
@@ -1587,7 +1326,7 @@ def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = ""
     - **recommendation**: Clear, specific action the patient should take
     - **explanation**: Why this is important based on their condition and current medical guidelines
     - **lifestyle_modifications**: Practical daily life tips to support the recommendation
-    - **source**: Whether based on "Mayo Clinic Guidelines", "WebMD Protocols", "Combined Guidelines", or "General Medical Knowledge"
+    - **source**: Whether based on "Mayo Clinic Guidelines", "Medline-Plus Protocols", "Combined Guidelines", or "General Medical Knowledge"
 
     FOCUS AREAS (if applicable):
     - Medication adherence and management
@@ -1605,11 +1344,11 @@ def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = ""
                 "recommendation": "specific actionable advice",
                 "explanation": "why this helps based on current guidelines and patient condition",
                 "lifestyle_modifications": "practical daily tips",
-                "source": "Mayo Clinic Guidelines / WebMD Protocols / Combined Guidelines / General Medical Knowledge"
+                "source": "Mayo Clinic Guidelines / Medline-Plus Protocols / Combined Guidelines / General Medical Knowledge"
             }}
         ],
         "data_source": "web_enhanced",
-        "sources_used": ["Mayo Clinic", "WebMD"],
+        "sources_used": ["Mayo Clinic", "Medline-Plus"],
         "disclaimer": "These recommendations are based on current medical guidelines but should not replace professional medical advice."
     }}
     """
@@ -1630,7 +1369,7 @@ def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = ""
             if mayo_treatments:
                 sources_used.append("Mayo Clinic")
             if webmd_treatments:
-                sources_used.append("WebMD")
+                sources_used.append("Medline-Plus")
             
             recommendations["sources_used"] = sources_used
             recommendations["data_source"] = "web_enhanced"
@@ -1793,7 +1532,7 @@ enhanced_doctor_agent = Agent(
     role="AI-Enhanced Medical Advisor with Real-Time Research",
     goal="Provide current, evidence-based recommendations using patient data and latest treatment guidelines from reputable medical sources",
     backstory="""You are an advanced medical advisor who combines patient-specific data 
-    with the latest treatment guidelines from reputable medical sources like Mayo Clinic and WebMD. 
+    with the latest treatment guidelines from reputable medical sources like Mayo Clinic and Medline-Plus. 
     You excel at synthesizing current medical knowledge with real-time treatment protocols to provide 
     the most up-to-date, evidence-based recommendations. You always prioritize patient safety and 
     clearly attribute your sources.""",
@@ -1917,7 +1656,7 @@ enhanced_recommendation_task = Task(
     Generate comprehensive, up-to-date medical recommendations using a multi-step process:
 
     1. **EXTRACT CONDITIONS**: From the structured medical data, identify specific searchable medical conditions
-    2. **RESEARCH TREATMENTS**: Scrape current treatment guidelines from Mayo Clinic and WebMD for each condition
+    2. **RESEARCH TREATMENTS**: Scrape current treatment guidelines from Mayo Clinic and Medline-Plus for each condition
     3. **ANALYZE & COMBINE**: Integrate web research with patient-specific data using LLM analysis
     4. **GENERATE RECOMMENDATIONS**: Create evidence-based, current recommendations with source attribution
     5. **FALLBACK HANDLING**: If web research fails, use LLM knowledge with clear indication
@@ -1927,7 +1666,7 @@ enhanced_recommendation_task = Task(
     Process Flow:
     - Extract searchable conditions from medical problems
     - Attempt Mayo Clinic scraping (primary source)
-    - Attempt WebMD scraping (secondary source)  
+    - Attempt Medline-Plus scraping (secondary source)  
     - Generate enhanced recommendations if web data available
     - Use LLM fallback if scraping fails completely
 
@@ -2118,3 +1857,54 @@ def generate_recommendations(structured_data: Dict[str, Any]) -> Dict[str, Any]:
 # If this module is run directly
 if __name__ == "__main__":
     logger.info("medical_pdf_processor.py module loaded")
+
+    # structured_data = {                                                                                                                                                                                        
+    #     "Patient Information": "Name: Nashwa Ahmed Rada, Age: 37, Gender: Female",                                                                                                             
+    #     "Date of Issue": "20.10.2024",                                                                                                                                                         
+    #     "Type of Report": "Hospital Discharge Summary",                                                                                                                                        
+    #     "Medical Problem": """Acute pancreatitis, sepsis (urinary tract infection, pneumonia), recurrent urinary gravels and stones, recent laparoscopic exploration and appendectomy, facial    
+    #         nerve palsy, hepatomegaly, right renal gravels with mild right hydronephrosis, bilateral pneumonia""",                                                                                     
+    #     "Simplified Explanation": """The patient has acute pancreatitis, which is inflammation of the pancreas, and sepsis, a severe response to infection. The sepsis is due to a urinary tract 
+    #         infection and pneumonia. She also has a history of kidney stones, recently had surgery to explore her abdomen and remove her appendix, and has facial nerve palsy. Additionally, the     
+    #         liver is enlarged, there are kidney stones with mild swelling in the right kidney, and pneumonia in both lungs."""                                                                         
+    # } 
+    # recommendations_result = generate_recommendations(structured_data)
+    # print(recommendations_result)
+    
+    # structured_data = {                                                                                                                                                     
+    #     "Patient Information": "Name: Sameh Mohamed Elsayed, Age: 38, Gender: Male",                                                                        
+    #     "Date of Issue": "18/03/2014",                                                                                                                      
+    #     "Type of Report": "Radiology Report",                                                                                                               
+    #     "Medical Problem": "Maxillo-ethmoidal and frontal sinusitis, Nasal septum deviation, Hypertrophied inferior nasal turbinates, Allergic rhinitis",   
+    #     "Simplified Explanation": "The patient has inflammation of the sinuses in the face and forehead, a slightly shifted nasal septum, enlarged structures inside the nose, and a history of allergies that affect the nose."                                                                         
+    # } 
+
+
+    # structured_data = {
+    #     "Patient Information": "Name: MR SAMEH MOHAMED EL-SAYED ATTEYA",
+    #     "Date of Issue": "03/06/2007",
+    #     "Type of Report": "Ultrasonography Report",
+    #     "Medical Problem": "Normal abdominal ultrasonography",
+    #     "Simplified Explanation": "The ultrasound of your abdomen appears normal."
+    # } 
+    # 
+
+    # structured_data = {
+    #     "Patient Information": "Name: MRSAMEH MOHAMED",
+    #     "Date of Issue": "23 October 2009",
+    #     "Type of Report": "U.S REPORT PELVIABDOMINAL_ULTRASONOGRAPHY",
+    #     "Medical Problem": "Calcular bladder",
+    #     "Simplified Explanation": "The gallbladder is filled with stones."
+    # } 
+    # 
+
+    # structured_data = {
+    #     "Patient Information": "Name: MR SAMEH EL SAYED",
+    #     "Date of Issue": "30 August 2009",
+    #     "Type of Report": "Abdominal Ultrasonography Report",
+    #     "Medical Problem": "Normal abdominal ultrasound study",
+    #     "Simplified Explanation": "The abdominal ultrasound results are normal, showing no abnormalities in the liver, gallbladder, pancreas, spleen, kidneys, or other abdominal structures." 
+    # }                                                                                                                                                                                       
+
+
+    
