@@ -88,7 +88,10 @@ def render_verification():
                 continue
 
             else:
-                verified_data[key] = st.text_input(key, value=value)
+                if len(value) > 80 or "\n" in value:
+                    verified_data[key] = st.text_area(key, value=value, height=100)
+                else:
+                    verified_data[key] = st.text_input(key, value=value)
 
     with col2:
         st.info("📋 Verification Guidelines")
@@ -187,14 +190,18 @@ def render_feedback():
 def render_recommendations():
     st.header("Medical Recommendations")
     recs = st.session_state.recommendations
+
     if "recommendations" in recs:
-        for i, r in enumerate(recs["recommendations"]):
-            st.subheader(f"Recommendation {i+1}")
-            st.markdown(f"**Action:** {r.get('recommendation', '')}")
-            st.markdown(f"**Why:** {r.get('explanation', '')}")
-            st.markdown(f"**Tip:** {r.get('lifestyle_modifications', '')}")
-            st.markdown("---")
-    elif "error" in recs:
-        st.error(recs["error"])
+        for i, rec in enumerate(recs["recommendations"]):
+            with st.container():
+                st.subheader(f"Recommendation {i+1}")
+                st.markdown(f"**Action:** {rec.get('recommendation', '')}")
+                if rec.get('explanation'):
+                    st.markdown(f"**Why it's important:** {rec.get('explanation', '')}")
+                if rec.get('lifestyle_modifications'):
+                    st.markdown(f"**Lifestyle Tip:** {rec.get('lifestyle_modifications', '')}")
+                if rec.get('source'):
+                    st.markdown(f"**Source:** {rec.get('source', '')}")
+                st.markdown("---")
     else:
         st.warning("No recommendations available")
