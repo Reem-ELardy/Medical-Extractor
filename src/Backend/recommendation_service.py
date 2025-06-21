@@ -27,7 +27,7 @@ def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = ""
     Args:
         patient_data (str): Patient's structured medical data
         mayo_data (str): Treatment data scraped from Mayo Clinic
-        medlineplus_data (str): Treatment data scraped from Medline-Plus
+        medlineplus_data (str): Treatment data scraped from WebMD
         
     Returns:
         str: JSON string with enhanced recommendations including source attribution
@@ -88,7 +88,7 @@ def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = ""
     - **recommendation**: Clear, specific action the patient should take
     - **explanation**: Why this is important based on their condition and current medical guidelines
     - **lifestyle_modifications**: Practical daily life tips to support the recommendation
-    - **source**: Whether based on "Mayo Clinic Guidelines", "Medline-Plus Protocols", "Combined Guidelines", or "General Medical Knowledge"
+    - **source**: Whether based on "Mayo Clinic Guidelines", "WebMD Protocols", "Combined Guidelines", or "General Medical Knowledge"
 
     FOCUS AREAS (if applicable):
     - Medication adherence and management
@@ -106,11 +106,11 @@ def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = ""
                 "recommendation": "specific actionable advice",
                 "explanation": "why this helps based on current guidelines and patient condition",
                 "lifestyle_modifications": "practical daily tips",
-                "source": "Mayo Clinic Guidelines / Medline-Plus Protocols / Combined Guidelines / General Medical Knowledge"
+                "source": "Mayo Clinic Guidelines / WebMD Protocols / Combined Guidelines / General Medical Knowledge"
             }}
         ],
         "data_source": "web_enhanced",
-        "sources_used": ["Mayo Clinic", "Medline-Plus"],
+        "sources_used": ["Mayo Clinic", "WebMD"],
         "disclaimer": "These recommendations are based on current medical guidelines but should not replace professional medical advice."
     }}
     """
@@ -131,7 +131,7 @@ def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = ""
             if mayo_treatments:
                 sources_used.append("Mayo Clinic")
             if webmd_treatments:
-                sources_used.append("Medline-Plus")
+                sources_used.append("WebMD")
             
             recommendations["sources_used"] = sources_used
             recommendations["data_source"] = "web_enhanced"

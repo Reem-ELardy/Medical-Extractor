@@ -124,7 +124,7 @@ enhanced_recommendation_task = Task(
     Generate comprehensive, up-to-date medical recommendations using a multi-step process:
 
     1. **EXTRACT CONDITIONS**: From the structured medical data, identify specific searchable medical conditions
-    2. **RESEARCH TREATMENTS**: Scrape current treatment guidelines from Mayo Clinic and Medline-Plus for each condition
+    2. **RESEARCH TREATMENTS**: Scrape current treatment guidelines from Mayo Clinic and WebMD for each condition
     3. **ANALYZE & COMBINE**: Integrate web research with patient-specific data using LLM analysis
     4. **GENERATE RECOMMENDATIONS**: Create evidence-based, current recommendations with source attribution
     5. **FALLBACK HANDLING**: If web research fails, use LLM knowledge with clear indication
@@ -134,7 +134,7 @@ enhanced_recommendation_task = Task(
     Process Flow:
     - Extract searchable conditions from medical problems
     - Attempt Mayo Clinic scraping (primary source)
-    - Attempt Medline-Plus scraping (secondary source)  
+    - Attempt WebMD scraping (secondary source)  
     - Generate enhanced recommendations if web data available
     - Use LLM fallback if scraping fails completely
 

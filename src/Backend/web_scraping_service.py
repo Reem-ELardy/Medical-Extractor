@@ -41,7 +41,7 @@ def extract_searchable_conditions(medical_problem: str) -> str:
 
     prompt = f"""
     You are a medical domain expert trained to convert complex clinical findings into
-    simplified, patient-friendly terms that users can easily search online (like on Mayo Clinic or Medline-Plus).
+    simplified, patient-friendly terms that users can easily search online (like on Mayo Clinic or WebMD).
 
     INPUT MEDICAL REPORT:
     "{medical_problem}"
