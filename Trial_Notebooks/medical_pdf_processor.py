@@ -687,7 +687,7 @@ def extract_searchable_conditions(medical_problem: str) -> str:
     - Output max 5 key conditions
 
     OUTPUT:
-    Return only a JSON array of simplified medicazl condition terms.
+    Return only a JSON array of simplified medical condition terms.
 
     Example:
     INPUT: "Maxillo-ethmoidal and frontal sinusitis, Nasal septum deviation, Hypertrophied inferior nasal turbinates, Allergic rhinitis"
