@@ -18,6 +18,7 @@ import requests
 from bs4 import BeautifulSoup
 from crewai.tools import tool
 from config import llm
+import inflect
 
 logger = logging.getLogger(__name__)
 
@@ -390,7 +391,7 @@ def scrape_mayo_treatments(conditions: List[str]) -> str:
         # If no h2 'Treatment' found, try other treatment headings as fallback
         if not treatments:
             treatment_headings = soup.find_all(['h2', 'h3', 'h4'], 
-                                             string=re.compile(r'treatment|therapy|management|care|medication', re.I))
+            string=re.compile(r'treatment|therapy|management|care|medication', re.I))
             
             for heading in treatment_headings:
                 # Get content following the heading
@@ -519,7 +520,6 @@ def scrape_medlineplus_treatments(conditions: List[str]) -> str:
     """
     results = {}
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-
     
     def clean_condition_for_url(condition: str) -> str:
         # Remove anything in parentheses and extra characters
@@ -529,19 +529,55 @@ def scrape_medlineplus_treatments(conditions: List[str]) -> str:
         condition = condition.replace(" ", "")
         return condition.strip()
 
+    def pluralize_slug(condition: str) -> str:
+        # Create inflect engine
+        p = inflect.engine()
+        words = condition.lower().split()
+        if words:
+            words[-1] = p.plural(words[-1])
+        return ''.join(words)
+
+    def singularize_slug(condition: str) -> str:
+        # Create inflect engine
+        p = inflect.engine()
+        words = condition.lower().split()
+        if words:
+            singular = p.singular_noun(words[-1])
+            words[-1] = singular if singular else words[-1]
+        return ''.join(words)
+
     for condition in conditions:
         try:
             time.sleep(1)
+            # ⿡ Try original slug
             slug = clean_condition_for_url(condition)
             url = f"https://medlineplus.gov/{slug}.html"
             resp = requests.get(url, headers=headers, timeout=10)
+
+            # ⿢ Try adding s to slug
             if resp.status_code != 200:
-                fallback = url.replace(".html", "s.html")
+                fallback = f"https://medlineplus.gov/{slug}s.html"
                 resp = requests.get(fallback, headers=headers, timeout=10)
                 url = fallback if resp.status_code == 200 else url
-                if resp.status_code != 200:
-                    results[condition] = {"error": f"No page found at {url}"}
-                    continue
+
+            # ⿣ Try pluralized slug
+            if resp.status_code != 200:
+                plural_slug = pluralize_slug(condition)
+                fallback = f"https://medlineplus.gov/{plural_slug}.html"
+                resp = requests.get(fallback, headers=headers, timeout=10)
+                url = fallback if resp.status_code == 200 else url
+
+            # ⿤ Try singularized slug
+            if resp.status_code != 200:
+                singular_slug = singularize_slug(condition)
+                fallback = f"https://medlineplus.gov/{singular_slug}.html"
+                resp = requests.get(fallback, headers=headers, timeout=10)
+                url = fallback if resp.status_code == 200 else url
+
+            # Check if we got a successful response
+            if resp.status_code != 200:
+                results[condition] = {"error": f"No page found at {url}"}
+                continue
 
             soup = BeautifulSoup(resp.content, 'html.parser')
             treatment_text = ""
