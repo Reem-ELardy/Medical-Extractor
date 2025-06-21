@@ -13,6 +13,12 @@ import logging
 from datetime import datetime
 import re
 from typing import Optional
+import argparse
+from azure.storage.blob import BlobServiceClient
+
+CONTAINER_NAME = "myfiles"
+UPLOAD_DIR = "uploads"
+STORAGE_CONNECTION_STRING = os.getenv("STORAGE_CONNECTION_STRING") 
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +42,46 @@ def extract_json(response):
     else:
         print("No valid JSON found in the response.")
         return None
+
+#############################################################################
+# BLOB UTILITIES
+#############################################################################
+
+def download_blob(blob_name: str, download_path: str):
+    try:
+        local_path = f"/home/azureuser/Backend/{download_path}"
+        blob_service_client = BlobServiceClient.from_connection_string(STORAGE_CONNECTION_STRING)
+        blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=blob_name)
+
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        with open(local_path, "wb") as f:
+            data = blob_client.download_blob()
+            f.write(data.readall())
+
+        logger.info(f"? Downloaded blob '{blob_name}' to '{download_path}'")
+        return True
+    except Exception as e:
+        logger.error(f"? Failed to download blob '{blob_name}': {e}")
+        return False
+
+def delete_blob(blob_name):
+    blob_service_client = BlobServiceClient.from_connection_string(STORAGE_CONNECTION_STRING)
+    blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=blob_name)
+
+    #blob_client.delete_blob()
+    file_path = os.path.join(UPLOAD_DIR, blob_name)
+    os.remove(file_path)
+    logger.info(f"?? Deleted blob and local copy: {blob_name}")
+
+#############################################################################
+# COMMAND ARGUMENTS UTILITIES
+#############################################################################
+
+def parse_arguments():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(description='Process medical images from Azure Blob Storage')
+    parser.add_argument('blob_name', help='Name of the blob file to process')
+    return parser.parse_args()
 
 #############################################################################
 # CACHING UTILITIES

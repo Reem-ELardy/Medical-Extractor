@@ -16,13 +16,19 @@ Main Functions:
 import os
 import json
 import logging
+import requests
+import sys
 from typing import Dict, Any
 from datetime import datetime
+from utils import extract_json, parse_arguments, download_blob, delete_blob
 from crewai import Crew, Process
 from agents import validation_agent, formatting_agent, enhanced_doctor_agent
 from tasks import extraction_task, validation_task, formatting_task, feedback_task, enhanced_recommendation_task
 
 logger = logging.getLogger(__name__)
+
+FASTAPI_URL = "http://localhost:8080"
+UPLOAD_DIR = "uploads"
 
 #############################################################################
 # CREW DEFINITION AND HELPER FUNCTIONS
@@ -190,3 +196,42 @@ def generate_recommendations(structured_data: Dict[str, Any]) -> Dict[str, Any]:
 # If this module is run directly
 if __name__ == "__main__":
     logger.info("medical_pdf_processor.py module loaded")
+
+    # Parse command line arguments
+    args = parse_arguments()
+    blob_name = args.blob_name
+    
+    logger.info(f"Processing blob: {blob_name}")
+    
+    try:
+        if not os.path.exists(UPLOAD_DIR):
+            os.makedirs(UPLOAD_DIR)
+
+        temp_file_path = os.path.join(UPLOAD_DIR, blob_name)
+        
+        # # Download and process the image
+        download_blob(blob_name, temp_file_path)
+        result = process_image(temp_file_path)
+        logger.info(result.raw)
+        
+        # Safely extract structured data
+        if isinstance(result.raw, str):
+            structured_data = extract_json(result.raw)
+        elif isinstance(result.raw, dict):
+            structured_data = result.raw
+        else:
+            raise ValueError("Unsupported type for result.raw")
+
+        delete_blob(blob_name)
+
+        res = requests.post(
+            f"{FASTAPI_URL}/save_result",
+            json={
+                "filename": blob_name,
+                "data": structured_data
+            }
+        )        
+    
+    except Exception as e:
+        logger.error(f"Error processing blob {blob_name}: {str(e)}")
+        sys.exit(1)    
