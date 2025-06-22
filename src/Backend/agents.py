@@ -53,12 +53,11 @@ formatting_agent = Agent(
 )
 logger.debug("Formatting Agent defined")
 
-# Enhanced Doctor Agent - NEW with web scraping capabilities
 enhanced_doctor_agent = Agent(
     role="AI-Enhanced Medical Advisor with Real-Time Research",
     goal="Provide current, evidence-based recommendations using patient data and latest treatment guidelines from reputable medical sources",
     backstory="""You are an advanced medical advisor who combines patient-specific data 
-    with the latest treatment guidelines from reputable medical sources like Mayo Clinic and Medline-Plus. 
+    with the latest treatment guidelines from reputable medical sources like Mayo Clinic and WebMD. 
     You excel at synthesizing current medical knowledge with real-time treatment protocols to provide 
     the most up-to-date, evidence-based recommendations. You always prioritize patient safety and 
     clearly attribute your sources.""",
@@ -71,6 +70,8 @@ enhanced_doctor_agent = Agent(
         generate_web_enhanced_recommendations,
         generate_fallback_recommendations
     ],
-    llm=llm
+    llm=llm,
+    max_execution_time=300,  # 5 minute timeout
+    max_retry_limit=3
 )
 logger.debug("Enhanced Doctor Agent defined")

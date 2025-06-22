@@ -18,6 +18,7 @@ import json
 import logging
 import requests
 import sys
+import time
 from typing import Dict, Any
 from datetime import datetime
 from utils import extract_json, parse_arguments, download_blob, delete_blob
@@ -147,51 +148,74 @@ def process_feedback(structured_data: Dict[str, Any], user_feedback: str) -> Dic
         logger.error(f"Error processing feedback: {str(e)}", exc_info=True)
         structured_data["feedback_error"] = f"Error processing feedback: {str(e)}"
         return structured_data
-
+    
 def generate_recommendations(structured_data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Generate enhanced medical recommendations with web scraping
+    Your existing generate_recommendations function with enhanced reliability.
+    This is the ONLY recommendation function you need.
     
     Args:
         structured_data (dict): The verified structured data
         
     Returns:
         dict: Enhanced medical recommendations with source attribution
-        
-    Raises:
-        Exception: If there is an error during recommendation generation
     """
     logger.info("Generating enhanced recommendations with web scraping")
     
-    try:
-        recommendation_crew = Crew(
-            agents=[enhanced_doctor_agent],
-            tasks=[enhanced_recommendation_task],
-            verbose=True,
-            process=Process.sequential
-        )
-        logger.debug("Enhanced recommendation crew created")
-        
-        result = recommendation_crew.kickoff(
-            inputs={"structured_data": json.dumps(structured_data)}
-        )
-        logger.debug("Enhanced recommendation crew completed processing")
-        
-        if isinstance(result, str):
-            try:
-                result = json.loads(result)
-                logger.debug("Successfully parsed JSON result from string")
-            except json.JSONDecodeError:
-                logger.warning("Could not parse enhanced recommendations result as JSON")
-                return {"recommendations_error": "Could not generate enhanced recommendations"}
-        
-        logger.info("Enhanced recommendation generation completed successfully")
-        return result
+    max_retries = 2
     
-    except Exception as e:
-        logger.error(f"Error generating enhanced recommendations: {str(e)}", exc_info=True)
-        return {"recommendations_error": f"Error generating enhanced recommendations: {str(e)}"}
-
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"Recommendation generation attempt {attempt + 1}/{max_retries}")
+            
+            # Create crew with your existing enhanced_doctor_agent and enhanced_recommendation_task
+            recommendation_crew = Crew(
+                agents=[enhanced_doctor_agent],
+                tasks=[enhanced_recommendation_task],
+                verbose=True,
+                process=Process.sequential
+            )
+            logger.debug("Enhanced recommendation crew created")
+            
+            result = recommendation_crew.kickoff(
+                inputs={"structured_data": json.dumps(structured_data)}
+            )
+            logger.debug("Enhanced recommendation crew completed processing")
+            
+            if isinstance(result.raw, str):
+                try:
+                    fixed = result.raw.replace("'", '"')
+                    result = json.loads(fixed)
+                    print(f"before extract_json:  {result}")
+                    logger.debug("Successfully parsed JSON result from string")
+                except json.JSONDecodeError:
+                    try:
+                        result = extract_json(result.raw)  # not result.raw
+                        print(f"after extract_json:  {result}")
+                    except Exception as e:
+                        logger.error(f"Failed to extract JSON: {e}")
+                        if attempt < max_retries - 1:
+                            continue  # Try again
+                        return {"recommendations_error": "Could not parse recommendations"}
+            
+            # ✅ ADD THIS: Return the result after successful processing
+            if result and isinstance(result, dict):
+                logger.info("Enhanced recommendation generation completed successfully")
+                return result
+            else:
+                logger.warning(f"Attempt {attempt + 1} returned empty or invalid result")
+                if attempt < max_retries - 1:
+                    continue  # Try again
+        
+        except Exception as e:
+            logger.error(f"Error on attempt {attempt + 1}: {str(e)}")
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)  # Wait before retry
+                continue
+            
+    # If all retries failed
+    logger.error("All recommendation generation attempts failed")
+    return {"recommendations_error": "Error generating enhanced recommendations: All attempts failed"}
 
 # If this module is run directly
 if __name__ == "__main__":

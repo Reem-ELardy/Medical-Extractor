@@ -9,6 +9,7 @@ This module defines all the tasks used in the medical PDF processing workflow.
 import logging
 from crewai import Task
 from agents import validation_agent, formatting_agent, enhanced_doctor_agent
+import json
 from ocr_service import extract_text_from_image
 from validation_service import validate_medical_values
 from formatting_service import format_to_json, process_user_feedback
@@ -118,7 +119,6 @@ feedback_task = Task(
 )
 logger.debug("Feedback Task defined")
 
-# Task 5: Generate recommendations based on the structured data
 enhanced_recommendation_task = Task(
     description="""
     Generate comprehensive, up-to-date medical recommendations using a multi-step process:
@@ -144,6 +144,12 @@ enhanced_recommendation_task = Task(
     - Safety and evidence-based recommendations
     - Clear source attribution
     - Practical lifestyle modifications
+
+    ERROR HANDLING:
+    - Validate all inputs using enhanced parsing
+    - Implement retry logic for transient failures
+    - Provide graceful fallbacks for each step
+    - Always return structured, usable output
     """,
     expected_output="Enhanced recommendations with current medical guidelines, source attribution, and fallback handling",
     agent=enhanced_doctor_agent,
@@ -154,7 +160,6 @@ enhanced_recommendation_task = Task(
         generate_web_enhanced_recommendations,
         generate_fallback_recommendations
     ],
-    async_execution=False,
-    context=[feedback_task]
+    async_execution=False
 )
 logger.debug("Recommendation Task defined")

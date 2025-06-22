@@ -10,6 +10,8 @@ This module handles generating medical recommendations, both web-enhanced
 import json
 import re
 import logging
+import time
+import random
 from crewai.tools import tool
 from config import llm
 
@@ -22,7 +24,7 @@ logger = logging.getLogger(__name__)
 @tool
 def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = "", medlineplus_data: str = "") -> str:
     """
-    Generate enhanced medical recommendations combining patient data with scraped treatment guidelines.
+    Generate enhanced medical recommendations with robust input handling and error recovery.
     
     Args:
         patient_data (str): Patient's structured medical data
@@ -32,33 +34,44 @@ def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = ""
     Returns:
         str: JSON string with enhanced recommendations including source attribution
     """
-    logger.info("Generating web-enhanced medical recommendations")
+    logger.info("Generating web-enhanced medical recommendations with robust error handling")
     
-    # Parse inputs
+    # Parse inputs with enhanced error handling
     try:
         if isinstance(patient_data, str):
-            patient_info = json.loads(patient_data)
+            try:
+                patient_info = json.loads(patient_data)
+            except json.JSONDecodeError:
+                # Try to create basic structure if raw text provided
+                patient_info = {"Patient Information": patient_data}
         else:
             patient_info = patient_data
-    except json.JSONDecodeError:
-        logger.error("Could not parse patient data")
-        return json.dumps({"error": "Could not parse patient data"})
+            
+        # Validate patient info has minimum required data
+        if not patient_info or not isinstance(patient_info, dict):
+            patient_info = {"Patient Information": "Unknown patient"}
+            
+    except Exception as e:
+        logger.error(f"Could not parse patient data: {e}")
+        patient_info = {"Patient Information": "Parse error - see raw data", "raw_data": str(patient_data)}
     
     try:
         mayo_treatments = json.loads(mayo_data) if mayo_data else {}
     except json.JSONDecodeError:
+        logger.warning("Could not parse Mayo data")
         mayo_treatments = {}
     
     try:
-        webmd_treatments = json.loads(medlineplus_data) if medlineplus_data else {}
+        medlineplus_treatments = json.loads(medlineplus_data) if medlineplus_data else {}
     except json.JSONDecodeError:
-        webmd_treatments = {}
-    
+        logger.warning("Could not parse WebMD data")
+        medlineplus_treatments = {}
+        
     logger.debug(f"Processing patient: {patient_info.get('Patient Information', 'Unknown')}")
     logger.debug(f"Mayo treatments available: {len(mayo_treatments)}")
-    logger.debug(f"WebMD treatments available: {len(webmd_treatments)}")
+    logger.debug(f"WebMD treatments available: {len(medlineplus_treatments)}")
     
-    # Create enhanced prompt with web data
+    # Enhanced prompt with better structure and error handling (using your existing prompt logic)
     prompt = f"""
     You are a clinically responsible AI medical advisor with access to the latest treatment guidelines. Generate evidence-based, patient-friendly recommendations.
 
@@ -68,8 +81,8 @@ def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = ""
     CURRENT MAYO CLINIC TREATMENT GUIDELINES:
     {json.dumps(mayo_treatments, indent=2)}
 
-    CURRENT WEBMD TREATMENT PROTOCOLS:
-    {json.dumps(webmd_treatments, indent=2)}
+    CURRENT MEDLINEPLUS TREATMENT PROTOCOLS:
+    {json.dumps(medlineplus_treatments, indent=2)}
 
     INSTRUCTIONS:
     Generate 2-3 comprehensive recommendations that:
@@ -114,44 +127,58 @@ def generate_web_enhanced_recommendations(patient_data: str, mayo_data: str = ""
         "disclaimer": "These recommendations are based on current medical guidelines but should not replace professional medical advice."
     }}
     """
-    
-    try:
-        logger.debug("Sending enhanced prompt to LLM")
-        response = llm.call(prompt)
-        logger.debug("Received enhanced recommendations from LLM")
+    try:    
+        # Generate with retry logic
+        max_attempts = 3
+        for attempt in range(max_attempts):
+            try:
+                logger.debug(f"Recommendation generation attempt {attempt + 1}")
+                
+                if attempt > 0:
+                    time.sleep(random.uniform(1, 3))
+                
+                response = llm.call(prompt)
+                
+                # Enhanced JSON extraction (using your existing logic)
+                import re
+                json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(0)
+                    recommendations = json.loads(json_str)
+                    
+                    # Validate structure
+                    if 'recommendations' in recommendations and recommendations['recommendations']:
+                        # Add metadata about sources used (your existing logic)
+                        sources_used = []
+                        if mayo_treatments:
+                            sources_used.append("Mayo Clinic")
+                        if medlineplus_treatments:
+                            sources_used.append("WebMD")
+                        
+                        recommendations["sources_used"] = sources_used
+                        recommendations["data_source"] = "web_enhanced"
+                        recommendations["fallback_used"] = False
+                        
+                        logger.info(f"Successfully generated {len(recommendations.get('recommendations', []))} web-enhanced recommendations")
+                        return json.dumps(recommendations, indent=2)
+                
+            except Exception as e:
+                logger.warning(f"Recommendation attempt {attempt + 1} failed: {e}")
+                continue
         
-        # Extract JSON from response
-        json_match = re.search(r'({.*})', response, re.DOTALL)
-        if json_match:
-            json_str = json_match.group(1)
-            recommendations = json.loads(json_str)
-            
-            # Add metadata about sources used
-            sources_used = []
-            if mayo_treatments:
-                sources_used.append("Mayo Clinic")
-            if webmd_treatments:
-                sources_used.append("WebMD")
-            
-            recommendations["sources_used"] = sources_used
-            recommendations["data_source"] = "web_enhanced"
-            recommendations["fallback_used"] = False
-            
-            logger.info(f"Successfully generated {len(recommendations.get('recommendations', []))} web-enhanced recommendations")
-            return json.dumps(recommendations, indent=2)
-        else:
-            logger.warning("No JSON found in enhanced recommendations response")
-            return json.dumps({
-                "error": "Could not parse enhanced recommendations",
-                "fallback_used": True
-            })
-    
+        # Fallback recommendations (your existing fallback logic)
+        logger.warning("All recommendation attempts failed, using fallback")
+        return json.dumps({
+            "error": "Could not parse enhanced recommendations",
+            "fallback_used": True
+        })
     except Exception as e:
         logger.error(f"Error generating web-enhanced recommendations: {str(e)}", exc_info=True)
         return json.dumps({
             "error": f"Failed to generate enhanced recommendations: {str(e)}",
             "fallback_used": True
         })
+
 
 @tool
 def generate_fallback_recommendations(patient_data: str) -> str:
@@ -252,3 +279,5 @@ def generate_fallback_recommendations(patient_data: str) -> str:
             "data_source": "error_fallback",
             "fallback_used": True
         })
+    
+

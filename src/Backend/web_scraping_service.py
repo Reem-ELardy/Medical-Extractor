@@ -48,7 +48,7 @@ def extract_searchable_conditions(medical_problem: str) -> str:
 
     TASK:
     - Extract only key medical conditions, diagnoses, or significant findings
-    - Convert them into layperson-friendly, web-searchable terms that would match the names of diseases or conditions as found on websites like Mayo Clinic or MedlinePlus
+    - Convert them into layperson-friendly, web-searchable terms that would match the names of diseases or conditions as found on websites like Mayo Clinic or WebMD
     - Avoid technical modifiers (e.g. anatomical locations, severity unless critical)
     - Avoid repetition or rare synonyms
     - Output max 5 key conditions

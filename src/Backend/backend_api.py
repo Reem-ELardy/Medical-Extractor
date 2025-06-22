@@ -171,14 +171,19 @@ async def get_medical_recommendations(request: RecommendationRequest):
     
     try:
         recommendation = generate_recommendations(request.structured_data)
-        
-        # Safely extract structured data
-        if isinstance(recommendation.raw, str):
-            recommendations = extract_json(recommendation.raw)
-        elif isinstance(recommendation.raw, dict):
-            recommendations = recommendation.raw
+         # Handle recommendation as either an object with `.raw` or a plain dict
+        if isinstance(recommendation, dict):
+            raw_data = recommendation.get("raw", recommendation)  # fallback to whole dict
         else:
-            raise ValueError("Unsupported type for result.raw")
+            raw_data = getattr(recommendation, "raw", None)
+
+        # Handle raw_data extraction
+        if isinstance(raw_data, str):
+            recommendations = extract_json(raw_data)
+        elif isinstance(raw_data, dict):
+            recommendations = raw_data
+        else:
+            raise ValueError("Unsupported type for recommendation.raw")
 
         logger.info("Recommendation generation completed successfully")
         return RecommendationResponse(

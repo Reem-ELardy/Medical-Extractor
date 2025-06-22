@@ -15,6 +15,9 @@ import re
 from typing import Optional
 import argparse
 from azure.storage.blob import BlobServiceClient
+from dotenv import load_dotenv
+
+load_dotenv()
 
 CONTAINER_NAME = "myfiles"
 UPLOAD_DIR = "uploads"
@@ -68,7 +71,7 @@ def delete_blob(blob_name):
     blob_service_client = BlobServiceClient.from_connection_string(STORAGE_CONNECTION_STRING)
     blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=blob_name)
 
-    #blob_client.delete_blob()
+    blob_client.delete_blob()
     file_path = os.path.join(UPLOAD_DIR, blob_name)
     os.remove(file_path)
     logger.info(f"?? Deleted blob and local copy: {blob_name}")
