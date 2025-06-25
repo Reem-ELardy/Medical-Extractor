@@ -9,13 +9,13 @@ A comprehensive, AI-powered tool for extracting structured data from unstructure
 This project implements an intelligent, end-to-end pipeline that systematically converts unstructured medical data from clinical reports and notes into a structured format. It uses a multi-agent workflow powered by CrewAI to handle different aspects of the extraction process, enhanced with cutting-edge technologies for medical data processing and validation.
 Key Capabilities
 
--**Automated OCR Processing**: Convert scanned medical PDFs to machine-readable text
--**Multi-Agent Orchestration**: Specialized AI agents for validation, formatting, and recommendations
--**Medical Knowledge Validation**: RAG-based validation using UMLS and ChromaDB
--**Real-time Medical Research**: Web scraping from Mayo Clinic and MedlinePlus
--**Patient-Friendly Outputs**: Generate accessible explanations and recommendations
--**Interactive Feedback Loop**: User-driven refinement and correction capabilities
--**Cloud-Native Deployment**: Scalable Azure-based infrastructure
+- **Automated OCR Processing**: Convert scanned medical PDFs to machine-readable text
+- **Multi-Agent Orchestration**: Specialized AI agents for validation, formatting, and recommendations
+- **Medical Knowledge Validation**: RAG-based validation using UMLS and ChromaDB
+- **Real-time Medical Research**: Web scraping from Mayo Clinic and MedlinePlus
+- **Patient-Friendly Outputs**: Generate accessible explanations and recommendations
+- **Interactive Feedback Loop**: User-driven refinement and correction capabilities
+- **Cloud-Native Deployment**: Scalable Azure-based infrastructure
 
 ---
 
