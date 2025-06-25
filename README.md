@@ -1,16 +1,38 @@
 # Medical PDF Extraction System
 
-A comprehensive tool for extracting structured data from medical PDFs using OCR, LLMs, and AI agents. This system processes unstructured medical documents into standardized JSON formats and provides patient-friendly recommendations based on the extracted information.
+A comprehensive, AI-powered tool for extracting structured data from unstructured medical documents using OCR, Large Language Models, and multi-agent workflows. This system transforms medical PDFs into standardized JSON formats and provides evidence-based patient recommendations.
 
 ---
 
 ## Overview
 
-This project implements an intelligent PDF extraction framework that systematically converts unstructured medical data from clinical reports and notes into a structured format. It uses a multi-agent workflow powered by CrewAI to handle different aspects of the extraction process:
+This project implements an intelligent, end-to-end pipeline that systematically converts unstructured medical data from clinical reports and notes into a structured format. It uses a multi-agent workflow powered by CrewAI to handle different aspects of the extraction process, enhanced with cutting-edge technologies for medical data processing and validation.
+Key Capabilities
 
-- **Validation Agent**: Ensures data accuracy and validates medical terminology.
-- **Formatting Agent**: Structures extracted data into standardized JSON.
-- **Doctor Agent**: Provides medical recommendations based on the structured data.
+-**Automated OCR Processing**: Convert scanned medical PDFs to machine-readable text
+-**Multi-Agent Orchestration**: Specialized AI agents for validation, formatting, and recommendations
+-**Medical Knowledge Validation**: RAG-based validation using UMLS and ChromaDB
+-**Real-time Medical Research**: Web scraping from Mayo Clinic and MedlinePlus
+-**Patient-Friendly Outputs**: Generate accessible explanations and recommendations
+-**Interactive Feedback Loop**: User-driven refinement and correction capabilities
+-**Cloud-Native Deployment**: Scalable Azure-based infrastructure
+
+---
+
+
+## Technology Stack
+
+| **Component**            | **Technology**   | **Purpose**                                         |
+| ------------------------ | ---------------- | --------------------------------------------------- |
+| **OCR Engine**           | EasyOCR          | Text extraction from medical images/PDFs            |
+| **Agent Orchestration**  | CrewAI           | Multi-agent workflow coordination                   |
+| **Language Models**      | Gemini 2.0 Flash | Natural language understanding and generation       |
+| **Knowledge Validation** | ChromaDB + UMLS  | Medical terminology validation via RAG              |
+| **Web Research**         | Custom scrapers  | Real-time treatment guidelines from trusted sources |
+| **Frontend**             | Streamlit        | Interactive user interface                          |
+| **Backend**              | FastAPI          | RESTful API services                                |
+| **Cloud Platform**       | Microsoft Azure  | Scalable deployment infrastructure                  |
+
 
 ---
 
@@ -97,11 +119,33 @@ GOOGLE_API_KEY=your_google_api_key_here
 
 ```
 Medical-Extractor/
-├── UI.py                       # Streamlit user interface
-├── medical_pdf_processor.py    # Core processing logic & CrewAI implementation
-├── requirements.txt            # Frozen dependencies
-├── .env                        # API keys configuration
-└── logs/                       # Log files directory
+├── src/
+│   ├── Backend/                    # Core processing services
+│   │   ├── __init__.py
+│   │   ├── agents.py              # CrewAI agent definitions
+│   │   ├── backend_api.py         # FastAPI main application
+│   │   ├── config.py              # Configuration settings
+│   │   ├── formatting_service.py # Data structuring service
+│   │   ├── medical_pdf_processor.py # Main processing pipeline
+│   │   ├── medical_rag.py         # RAG validation system
+│   │   ├── ocr_service.py         # OCR processing
+│   │   ├── recommendation_service.py # Medical recommendations
+│   │   ├── tasks.py               # CrewAI task definitions
+│   │   ├── utils.py               # Utility functions
+│   │   ├── validation_service.py  # Medical data validation
+│   │   └── web_scraping_service.py # Real-time web research
+│   ├── embeddings/                 # ChromaDB vector database
+│   └── Frontend/                   # User interface components
+│       ├── Helper_Function_UI.py   # UI helper functions
+│       ├── UI_api.py              # Frontend API integration
+│       ├── UI_Components.py       # Reusable UI components
+│       └── UI.py                  # Main Streamlit application
+├── cache/                          # Cached web scraping data
+├── logs/                           # System logs
+├── uploads/                        # Uploaded files storage
+├── .env                           # Environment variables
+├── requirements.txt               # Python dependencies
+└── README.md                      # Project documentation
 ```
 
 ---
